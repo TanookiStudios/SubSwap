@@ -68,8 +68,9 @@ main {
   margin-right: auto;
 }
 
-.step-body > .brand {
-  margin-bottom: 18px;
+/* Sitting above the cards, before step 1 is out of the way. */
+main > .brand {
+  margin: 0 2px 2px;
 }
 
 .card {

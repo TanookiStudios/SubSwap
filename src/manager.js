@@ -790,16 +790,18 @@ function renderSteps() {
   el("step-1").hidden = foldStep1;
   el("show-step-1").hidden = !foldStep1 || busy;
 
-  // The title sits on the buttons row once step 1 is out of the way; while
-  // step 1 is up it goes above that instead, so it always reads as the page
-  // title rather than turning up halfway down.
+  // The title sits on the buttons row once step 1 is out of the way — that's
+  // where the space saving matters. While step 1 is still up it sits above the
+  // cards instead: putting it inside step 1 left the "1" badge lined up with
+  // the word SubSwap, so the number appeared to be labelling the app rather
+  // than the step.
   const brand = el("brand");
   if (foldStep1) {
     const controls = el("run-start").parentElement;
     if (brand.parentElement !== controls) controls.prepend(brand);
   } else {
-    const body = el("step-1").querySelector(".step-body");
-    if (brand.parentElement !== body) body.prepend(brand);
+    const main = document.querySelector("main");
+    if (brand.parentElement !== main) main.prepend(brand);
   }
 
   el("step-1").classList.toggle("done", lists.length > 0);

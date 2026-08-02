@@ -17,7 +17,6 @@
 // Nothing appears on screen — this is headless.
 
 import { execFileSync } from "node:child_process";
-import { createServer } from "node:http";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -217,37 +216,6 @@ const work = mkdtempSync(join(tmpdir(), "subswap-shots-"));
 const stage = join(work, "src");
 cpSync(srcDir, stage, { recursive: true });
 
-// Served over HTTP rather than opened as a file. ES modules are blocked over
-// file:// by CORS — the page loads, the stylesheet applies, and manager.js
-// never runs, which yields a screenshot of un-rendered markup that looks
-// almost right. Found that the hard way.
-const MIME = {
-  ".html": "text/html; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-};
-
-const server = createServer((req, res) => {
-  const name = decodeURIComponent(new URL(req.url, "http://localhost").pathname).replace(/^\/+/, "");
-  const file = join(stage, name);
-  if (!file.startsWith(stage)) {
-    res.writeHead(403).end();
-    return;
-  }
-  try {
-    const body = readFileSync(file);
-    const dot = name.lastIndexOf(".");
-    res.writeHead(200, { "content-type": MIME[name.slice(dot)] || "application/octet-stream" });
-    res.end(body);
-  } catch {
-    res.writeHead(404).end();
-  }
-});
-
-await new Promise((ready) => server.listen(0, "127.0.0.1", ready));
-const port = server.address().port;
 
 try {
   for (const [state, config] of Object.entries(STATES)) {
@@ -272,11 +240,14 @@ try {
         "--no-default-browser-check",
         "--hide-scrollbars",
         "--force-color-profile=srgb",
+        // Without this, file:// is an opaque origin and <script type="module">
+        // is refused by CORS — the page renders un-booted markup instead.
+        "--allow-file-access-from-files",
         "--virtual-time-budget=4000",
         `--screenshot=${out}`,
         `--window-size=${WIDTH},${HEIGHT}`,
         `--user-data-dir=${join(work, `profile-${state}`)}`,
-        `http://127.0.0.1:${port}/${pageName}`,
+        `file://${join(stage, pageName)}`,
       ],
       { stdio: "pipe", timeout: 90000 },
     );
@@ -286,7 +257,6 @@ try {
     console.log(`${state}.png  ${bytes} bytes  — ${config.note}`);
   }
 } finally {
-  server.close();
   rmSync(work, { recursive: true, force: true });
 }
 
