@@ -70,8 +70,68 @@ main {
 
 .card h2 {
   margin: 0 0 6px;
-  font-size: 16px;
+  font-size: 18px;
   letter-spacing: -0.01em;
+}
+
+/* The two numbered steps are the whole app. Everything else is tucked away. */
+.step {
+  display: flex;
+  gap: 16px;
+  padding: 22px 22px 20px;
+}
+
+.step-no {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.step-body {
+  flex: 1;
+  min-width: 0;
+}
+
+button.big {
+  font-size: 16px;
+  padding: 12px 22px;
+  margin-right: 8px;
+}
+
+.practice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.practice input {
+  margin-top: 3px;
+  flex: none;
+}
+
+details.card > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+details.card[open] > summary {
+  margin-bottom: 14px;
+}
+
+.muted {
+  color: var(--muted);
+  font-weight: 400;
 }
 
 .help {

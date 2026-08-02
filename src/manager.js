@@ -243,10 +243,13 @@ async function scanAccount(focus = true) {
 async function doExport() {
   const button = el("export-run");
   button.disabled = true;
-  el("export-status").textContent = "Scanning… the YouTube tab will scroll itself, leave it alone.";
+  el("export-status").textContent =
+    "Working… a YouTube window will open and scroll itself. Leave it be for a few seconds.";
   try {
     const channels = await scanAccount(true);
-    const label = el("export-label").value.trim() || `Account ${lists.length + 1}`;
+    const label =
+      el("export-label").value.trim() ||
+      (lists.length === 0 ? "My subscriptions" : `My subscriptions ${lists.length + 1}`);
     lists.unshift({
       id: `list-${Date.now()}`,
       label,
@@ -565,6 +568,8 @@ function renderLists() {
     select.appendChild(option);
   }
   if (previous && lists.some((l) => l.id === previous)) select.value = previous;
+  // With one saved list there's nothing to choose, so don't ask.
+  el("list-row").hidden = lists.length < 2;
 }
 
 function renderRun() {
@@ -573,7 +578,7 @@ function renderRun() {
   const resumable = paused && Q.nextPendingIndex(run) !== -1;
   const finished = Boolean(run && run.status === "finished");
 
-  el("run-start").textContent = resumable ? "Resume" : "Start";
+  el("run-start").textContent = resumable ? "Resume" : "Subscribe to them all";
   el("run-start").disabled = running;
   el("run-pause").disabled = !running;
   el("run-stop").disabled = !running && !paused;
