@@ -790,6 +790,18 @@ function renderSteps() {
   el("step-1").hidden = foldStep1;
   el("show-step-1").hidden = !foldStep1 || busy;
 
+  // The title sits on the buttons row once step 1 is out of the way; while
+  // step 1 is up it goes above that instead, so it always reads as the page
+  // title rather than turning up halfway down.
+  const brand = el("brand");
+  if (foldStep1) {
+    const controls = el("run-start").parentElement;
+    if (brand.parentElement !== controls) controls.prepend(brand);
+  } else {
+    const body = el("step-1").querySelector(".step-body");
+    if (brand.parentElement !== body) body.prepend(brand);
+  }
+
   el("step-1").classList.toggle("done", lists.length > 0);
   el("step-2").classList.toggle("done", Boolean(run && run.status === "finished" && !run.dryRun));
 

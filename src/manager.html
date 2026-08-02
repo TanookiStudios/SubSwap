@@ -6,11 +6,6 @@
     <link rel="stylesheet" href="manager.css" />
   </head>
   <body>
-    <header class="topbar">
-      <h1>SubSwap</h1>
-      <p class="tagline">Move your subscriptions to a new YouTube account.</p>
-    </header>
-
     <main>
       <!-- Step 1 ------------------------------------------------------- -->
       <section class="card step" id="step-1">
@@ -42,6 +37,13 @@
           </button>
 
           <div class="controls">
+            <!-- The brand rides in this row while step 1 is folded away, so the
+                 title and the buttons share one line instead of costing two
+                 blocks. renderSteps moves it up to step 1 when that's on show. -->
+            <div class="brand" id="brand">
+              <h1>SubSwap</h1>
+              <p>Move your subscriptions to a new YouTube account.</p>
+            </div>
             <button id="run-start" class="big primary">Subscribe to them all</button>
             <button id="run-pause" disabled>Pause</button>
             <button id="run-stop" disabled>Stop</button>

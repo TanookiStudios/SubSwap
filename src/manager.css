@@ -43,29 +43,33 @@ body {
   font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-.topbar {
-  padding: 28px 24px 8px;
-  max-width: 1060px;
-  margin: 0 auto;
-}
-
-.topbar h1 {
-  margin: 0;
-  font-size: 26px;
-  letter-spacing: -0.02em;
-}
-
-.tagline {
-  margin: 4px 0 0;
-  color: var(--muted);
-}
-
 main {
   max-width: 1060px;
   margin: 0 auto;
-  padding: 16px 24px 64px;
+  padding: 28px 24px 64px;
   display: grid;
   gap: 16px;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.brand p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+/* Pushes whatever follows it — the run buttons — over to the right. */
+.controls > .brand {
+  margin-right: auto;
+}
+
+.step-body > .brand {
+  margin-bottom: 18px;
 }
 
 .card {
