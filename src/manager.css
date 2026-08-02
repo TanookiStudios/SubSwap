@@ -351,8 +351,8 @@ button.primary {
    there's nothing to do but watch. */
 .job-cols {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 28px;
   align-items: start;
   margin-top: 14px;
 }
@@ -414,12 +414,6 @@ button.primary {
   background: var(--bad);
 }
 
-#feed .time {
-  margin-left: auto;
-  color: var(--muted);
-  font-size: 12px;
-  flex: none;
-}
 
 /* Tip jar column. Sticky so it stays put as the feed scrolls past it. */
 .support {
@@ -432,8 +426,8 @@ button.primary {
 }
 
 .support .saved {
-  margin: 0 0 14px;
-  font-size: 14.5px;
+  margin: 0 0 16px;
+  font-size: 16px;
   font-weight: 620;
   line-height: 1.45;
   color: var(--accent);
@@ -444,9 +438,9 @@ button.primary {
 }
 
 .support .about p {
-  margin: 0 0 12px;
-  font-size: 13px;
-  line-height: 1.6;
+  margin: 0 0 13px;
+  font-size: 14px;
+  line-height: 1.62;
   color: var(--muted);
 }
 
@@ -525,11 +519,23 @@ a.tip {
   font-size: 13.5px;
 }
 
-/* A step that's been done fades back so the live one is obvious. */
-.step.done {
-  opacity: 0.55;
-}
-
 .step.done .step-no {
   background: var(--ok);
+}
+
+/* Quiet text button — for getting step 1 back once it's been folded away. */
+.linky {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 13.5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.linky:hover {
+  color: var(--ink);
 }

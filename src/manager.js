@@ -26,6 +26,7 @@ const el = (id) => document.getElementById(id);
 let lists = [];
 let run = null;
 let selectedListId = null;
+let showStep1 = false;
 let stats = { subscribed: 0 };
 let logLines = [];
 let workerTabId = null;
@@ -327,7 +328,8 @@ async function doExport() {
     await save();
 
     el("export-status").textContent = `Saved “${label}” — ${channels.length} channels. On to step 2.`;
-    el("step-1").classList.add("done");
+    // Job done, so it folds itself away again.
+    showStep1 = false;
     log(`Saved ${channels.length} channels as “${label}”.`, "ok");
     render();
     el("step-2").scrollIntoView({ behavior: "smooth", block: "center" });
@@ -778,6 +780,13 @@ function renderRun() {
 function renderSteps() {
   const running = Boolean(run && run.status === "running");
 
+  // Once there's a list saved, step 1 comes off the page entirely rather than
+  // sitting there greyed out — everything below it moves up. The link under
+  // the lists brings it back for a second account.
+  const foldStep1 = lists.length > 0 && !showStep1;
+  el("step-1").hidden = foldStep1;
+  el("show-step-1").hidden = !foldStep1 || running;
+
   el("step-1").classList.toggle("done", lists.length > 0);
   el("step-2").classList.toggle("done", Boolean(run && run.status === "finished" && !run.dryRun));
 
@@ -805,11 +814,9 @@ function renderFeed() {
     text.className = "text";
     text.textContent = line.text;
 
-    const time = document.createElement("span");
-    time.className = "time";
-    time.textContent = line.stamp;
-
-    li.append(dot, text, time);
+    // Timestamps are still recorded — "Copy the log" includes them, which is
+    // what matters when someone reports a problem — they're just noise on screen.
+    li.append(dot, text);
     list.appendChild(li);
   }
 }
@@ -882,6 +889,12 @@ async function importFile(file) {
 // ----------------------------------------------------------------- wiring
 
 el("export-run").addEventListener("click", doExport);
+
+el("show-step-1").addEventListener("click", () => {
+  showStep1 = true;
+  render();
+  el("step-1").scrollIntoView({ behavior: "smooth", block: "center" });
+});
 
 el("mode").addEventListener("click", (event) => {
   const button = event.target.closest("button[data-mode]");
