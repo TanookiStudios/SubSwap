@@ -38,7 +38,7 @@ body {
 
 .topbar {
   padding: 28px 24px 8px;
-  max-width: 860px;
+  max-width: 1060px;
   margin: 0 auto;
 }
 
@@ -54,7 +54,7 @@ body {
 }
 
 main {
-  max-width: 860px;
+  max-width: 1060px;
   margin: 0 auto;
   padding: 16px 24px 64px;
   display: grid;
@@ -327,7 +327,13 @@ button.primary {
   flex-wrap: wrap;
 }
 
-/* The running job. */
+/* The running job, which lives inside step 2. */
+.job {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
 .job-head {
   display: flex;
   align-items: baseline;
@@ -335,8 +341,26 @@ button.primary {
   margin-bottom: 10px;
 }
 
-.job-head h2 {
+.job-head h3 {
   margin: 0;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+/* Log on the left, tip jar on the right — so the ask is on screen while
+   there's nothing to do but watch. */
+.job-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+  margin-top: 14px;
+}
+
+@media (max-width: 940px) {
+  .job-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .job-counts {
@@ -353,9 +377,9 @@ button.primary {
 
 #feed {
   list-style: none;
-  margin: 14px 0 0;
+  margin: 0;
   padding: 0;
-  max-height: 320px;
+  max-height: 460px;
   overflow-y: auto;
   border-top: 1px solid var(--line);
 }
@@ -397,18 +421,36 @@ button.primary {
   flex: none;
 }
 
-/* Support panel. */
+/* Tip jar column. Sticky so it stays put as the feed scrolls past it. */
+.support {
+  position: sticky;
+  top: 16px;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
 .support .saved {
-  margin: 0 0 18px;
-  font-size: 17px;
+  margin: 0 0 14px;
+  font-size: 14.5px;
   font-weight: 620;
-  letter-spacing: -0.01em;
+  line-height: 1.45;
+  color: var(--accent);
+}
+
+.support .saved:empty {
+  display: none;
 }
 
 .support .about p {
-  margin: 0 0 14px;
-  max-width: 62ch;
-  line-height: 1.62;
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.support .about p:first-child {
   color: var(--ink);
 }
 
@@ -417,28 +459,33 @@ button.primary {
 }
 
 a.tip {
-  display: inline-block;
-  margin-top: 18px;
-  padding: 11px 20px;
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  padding: 10px 16px;
   border-radius: 9px;
   background: var(--accent);
   color: #fff;
   font-weight: 650;
+  font-size: 14px;
   text-decoration: none;
 }
 
 .tip-missing {
-  margin-top: 18px;
-  font-size: 13px;
+  margin-top: 16px;
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--warn);
 }
 
 .sign {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-top: 30px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
   opacity: 0.9;
 }
 

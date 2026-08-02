@@ -46,81 +46,85 @@
             <button id="run-reset" hidden>That looked right — do it for real</button>
           </div>
 
-          <label class="practice"
+          <label class="practice" id="practice-row"
             ><input type="checkbox" id="dry-run" checked /> Practice run first — go through the whole
             list without actually subscribing, so you can see it's right</label
           >
-        </div>
-      </section>
 
-      <!-- The job ------------------------------------------------------ -->
-      <section class="card job" id="job" hidden>
-        <div class="job-head">
-          <h2 id="job-title">Working…</h2>
-          <span class="job-counts" id="progress-counts"></span>
-        </div>
-        <div class="bar"><div class="fill" id="progress-fill"></div></div>
-        <p class="now" id="now-line"></p>
-        <p class="warn" id="run-warning" hidden></p>
-        <ol id="feed"></ol>
-        <p class="help keepopen">
-          Leave this tab open while it's working. If you close it, nothing is lost — come back and
-          press Resume.
-        </p>
-      </section>
+          <!-- The job lives inside step 2 rather than in a card of its own —
+               it's the same job, and a second card wasted a screenful. -->
+          <div class="job" id="job" hidden>
+            <div class="job-head">
+              <h3 id="job-title">Working…</h3>
+              <span class="job-counts" id="progress-counts"></span>
+            </div>
+            <div class="bar"><div class="fill" id="progress-fill"></div></div>
+            <p class="now" id="now-line"></p>
+            <p class="warn" id="run-warning" hidden></p>
 
-      <!-- Support ------------------------------------------------------ -->
-      <section class="card support" id="support" hidden>
-        <p class="saved" id="saved-line"></p>
+            <div class="job-cols">
+              <ol id="feed"></ol>
 
-        <div class="about">
-          <p>
-            I'm Maddie, and I make things like this on my own — one autistic developer who cares,
-            maybe a little too much, about getting the small things right.
-          </p>
-          <p>
-            Building software is how I earn my living. Traditional employment has never sat well with
-            the way my mind is wired, so I've built something that does: tools I need myself, then
-            released to everyone else — usually free. There are no investors and no company taking a
-            cut, so people chipping in a few quid is genuinely what keeps this going.
-          </p>
-          <p>
-            SubSwap is free and always will be. If it just saved you an evening of clicking, and you
-            can spare it, a tip means a lot. If you can't, that's completely fine — enjoy the app.
-          </p>
-        </div>
+              <aside class="support" id="support">
+                <p class="saved" id="saved-line"></p>
 
-        <a id="tip-link" class="tip" href="#" target="_blank" rel="noopener" hidden>Buy me a coffee</a>
-        <p class="tip-missing" id="tip-missing" hidden>
-          <!-- Shown only in development: see SUPPORT_URL in manager.js -->
-        </p>
+                <div class="about">
+                  <p>
+                    I'm Maddie, and I make things like this on my own — one autistic developer who
+                    cares, maybe a little too much, about getting the small things right.
+                  </p>
+                  <p>
+                    Building software is how I earn my living. Traditional employment has never sat
+                    well with the way my mind is wired, so I've built something that does: tools I
+                    need myself, then released to everyone else — usually free. There are no
+                    investors and no company taking a cut, so people chipping in a few quid is
+                    genuinely what keeps this going.
+                  </p>
+                  <p>
+                    SubSwap is free and always will be. If it just saved you an evening of clicking,
+                    and you can spare it, a tip means a lot. If you can't, that's completely fine —
+                    enjoy the app.
+                  </p>
+                </div>
 
-        <div class="sign">
-          <!-- Inlined rather than an <img> so currentColor follows the theme. -->
-          <svg
-            viewBox="0 0 330 116"
-            width="200"
-            height="64"
-            role="img"
-            aria-label="Signed, Maddie"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.7"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <title>Maddie</title>
-            <g transform="rotate(-4 160 66) skewX(-8)">
-              <path d="M2 72 C 12 69 22 69 32 68" opacity="0.85"></path>
-              <path
-                d="M50 92 C 46 66 48 34 56 30 C 62 27 62 46 63 62 C 64 74 63 84 68 90 C 74 64 84 40 92 46 C 97 58 95 80 102 90 C 106 94 114 92 118 84 C 122 72 108 68 106 80 C 105 90 118 94 121 84 C 122 76 122 82 126 90 C 130 94 138 92 141 84 C 144 72 130 68 128 80 C 127 90 140 94 143 84 C 145 60 149 26 152 27 C 154 26 153 42 152 54 C 151 68 149 82 155 90 C 159 94 167 92 170 84 C 173 72 159 68 157 80 C 156 90 169 94 172 84 C 174 60 178 26 181 27 C 183 26 182 42 181 54 C 180 68 178 82 184 90 C 188 94 193 82 194 74 C 195 80 194 88 199 90 C 205 86 214 82 216 74 C 218 66 205 64 202 72 C 199 82 210 90 222 84 C 242 96 278 96 306 74 C 316 67 320 62 323 63"
-              ></path>
-              <circle cx="196" cy="48" r="2.4" fill="currentColor" stroke="none"></circle>
-            </g>
-          </svg>
-          <div>
-            <p class="sign-name">Maddie</p>
-            <p class="sign-role">maker of SubSwap</p>
+                <a id="tip-link" class="tip" target="_blank" rel="noopener" hidden>Buy me a coffee</a>
+                <p class="tip-missing" id="tip-missing" hidden></p>
+
+                <div class="sign">
+                  <!-- Inlined rather than an <img> so currentColor follows the theme. -->
+                  <svg
+                    viewBox="0 0 330 116"
+                    width="170"
+                    height="54"
+                    role="img"
+                    aria-label="Signed, Maddie"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <title>Maddie</title>
+                    <g transform="rotate(-4 160 66) skewX(-8)">
+                      <path d="M2 72 C 12 69 22 69 32 68" opacity="0.85"></path>
+                      <path
+                        d="M50 92 C 46 66 48 34 56 30 C 62 27 62 46 63 62 C 64 74 63 84 68 90 C 74 64 84 40 92 46 C 97 58 95 80 102 90 C 106 94 114 92 118 84 C 122 72 108 68 106 80 C 105 90 118 94 121 84 C 122 76 122 82 126 90 C 130 94 138 92 141 84 C 144 72 130 68 128 80 C 127 90 140 94 143 84 C 145 60 149 26 152 27 C 154 26 153 42 152 54 C 151 68 149 82 155 90 C 159 94 167 92 170 84 C 173 72 159 68 157 80 C 156 90 169 94 172 84 C 174 60 178 26 181 27 C 183 26 182 42 181 54 C 180 68 178 82 184 90 C 188 94 193 82 194 74 C 195 80 194 88 199 90 C 205 86 214 82 216 74 C 218 66 205 64 202 72 C 199 82 210 90 222 84 C 242 96 278 96 306 74 C 316 67 320 62 323 63"
+                      ></path>
+                      <circle cx="196" cy="48" r="2.4" fill="currentColor" stroke="none"></circle>
+                    </g>
+                  </svg>
+                  <div>
+                    <p class="sign-name">Maddie</p>
+                    <p class="sign-role">maker of SubSwap</p>
+                  </div>
+                </div>
+              </aside>
+            </div>
+
+            <p class="help keepopen">
+              Leave this tab open while it's working. If you close it, nothing is lost — come back
+              and press Resume.
+            </p>
           </div>
         </div>
       </section>

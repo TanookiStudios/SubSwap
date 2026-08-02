@@ -303,6 +303,10 @@ async function scanAccount() {
 }
 
 async function doExport() {
+  if (run && run.status === "running") {
+    log("There's a job running — pause it first.", "warn");
+    return;
+  }
   const button = el("export-run");
   button.disabled = true;
   el("export-status").textContent =
@@ -772,8 +776,18 @@ function renderRun() {
 }
 
 function renderSteps() {
+  const running = Boolean(run && run.status === "running");
+
   el("step-1").classList.toggle("done", lists.length > 0);
   el("step-2").classList.toggle("done", Boolean(run && run.status === "finished" && !run.dryRun));
+
+  // Mid-run these can't be changed anyway, and hiding them gives the feed and
+  // the tip column the room they need. Disabling the export button also stops
+  // a scan being kicked off on top of a running job — both want the same
+  // working window, and the job would lose it.
+  el("lists").hidden = running;
+  el("practice-row").hidden = running;
+  el("export-run").disabled = running;
 }
 
 // Newest first, so the thing that just happened is always the thing you see.
