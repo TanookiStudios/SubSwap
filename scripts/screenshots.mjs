@@ -90,8 +90,6 @@ function feedLines(state) {
     { stamp: "2:57:56 PM", text: "Subscribed to Pocket Astronomy", level: "ok" },
     { stamp: "2:57:41 PM", text: "Subscribed to Ninety Second History", level: "ok" },
     { stamp: "2:57:29 PM", text: "Subscribed to Harbour Lights Sessions", level: "ok" },
-    { stamp: "2:57:14 PM", text: "Subscribed to Cold Brew Coding", level: "ok" },
-    { stamp: "2:57:02 PM", text: "Subscribed to The Repair Bench", level: "ok" },
   ];
   if (state === "done") {
     lines.unshift({
@@ -107,7 +105,11 @@ function feedLines(state) {
       level: "",
     });
   }
-  return lines;
+  // The app stores its log oldest-first and reverses it at render time so the
+  // newest is on top. The lines above are written newest-first because that's
+  // how they read here, so flip them — otherwise the screenshots show the feed
+  // running the wrong way up.
+  return lines.reverse();
 }
 
 function runFor(state) {
@@ -182,10 +184,29 @@ function stubSource(state) {
   windows: { create: async () => ({ id: 1, tabs: [{ id: 1 }] }), update: async () => {}, remove: async () => {} },
   scripting: { executeScript: async () => [{ result: null }] },
 };
-// The "now" line is written by the run loop, which isn't running here.
 addEventListener("load", () => {
+  // The "now" line is written by the run loop, which isn't running here.
   const now = document.getElementById("now-line");
   if (now) now.textContent = ${JSON.stringify(nowLineFor(state))};
+
+  // A stored "running" job means the tab died mid-run, so the app quite
+  // correctly reopens it as Paused / Interrupted. That's the right behaviour
+  // and the wrong screenshot — a listing shouldn't advertise a broken run.
+  // These three are put back to what a live run actually looks like.
+  const live = ${JSON.stringify(state === "running" || state === "break")};
+  if (live) {
+    document.getElementById("job-title").textContent = "Subscribing…";
+    document.getElementById("run-warning").hidden = true;
+    const start = document.getElementById("run-start");
+    start.textContent = "Subscribe to them all";
+    start.disabled = true;
+    document.getElementById("run-pause").disabled = false;
+    document.getElementById("run-stop").disabled = false;
+  }
+
+  // Developer nag about an unset SUPPORT_URL — not product, never in a shot.
+  const nag = document.getElementById("tip-missing");
+  if (nag) nag.hidden = true;
 });`;
 }
 
@@ -212,25 +233,70 @@ if (!html.includes('<script type="module" src="manager.js"></script>')) {
 // leave files behind — and package.mjs ships everything in src/, so they'd end
 // up in a store upload. Copying keeps the real CSS and the real code (relative
 // imports and all) while making that impossible.
+// Each capture runs in its own child process. Launching Chrome twice from a
+// single Node process reliably kills the second launch on this machine — the
+// first image lands and then it falls over, every time. One child per shot
+// sidesteps it, and a shot that fails doesn't take the rest of the run with it.
+const only = process.argv[2];
+
+if (!only) {
+  const states = Object.entries(STATES);
+  const failed = [];
+
+  for (const [state, config] of states) {
+    process.stdout.write(`${state}.png … `);
+    try {
+      execFileSync(process.execPath, [fileURLToPath(import.meta.url), state], { stdio: "pipe" });
+      console.log(`${statSync(join(outDir, `${state}.png`)).size} bytes — ${config.note}`);
+    } catch (err) {
+      failed.push(state);
+      console.log("FAILED");
+      console.error(indent(err.stderr?.toString() || err.message));
+    }
+  }
+
+  if (failed.length > 0) {
+    console.error(`\n${failed.length} of ${states.length} failed: ${failed.join(", ")}`);
+    console.error("Rerunning picks up the ones that are missing.");
+    process.exit(1);
+  }
+  console.log(`\nwrote ${states.length} screenshots to store/screenshots/ at ${WIDTH}x${HEIGHT}`);
+  console.log("The store wants 1280x800 or 640x400 — these are ready to upload as they are.");
+  process.exit(0);
+}
+
+function indent(text) {
+  return String(text)
+    .trim()
+    .split("\n")
+    .map((line) => `    ${line}`)
+    .join("\n");
+}
+
+// --- one state, one Chrome ---------------------------------------------
+
+if (!STATES[only]) {
+  throw new Error(`unknown state "${only}" — expected one of ${Object.keys(STATES).join(", ")}`);
+}
+
 const work = mkdtempSync(join(tmpdir(), "subswap-shots-"));
 const stage = join(work, "src");
 cpSync(srcDir, stage, { recursive: true });
 
-
 try {
-  for (const [state, config] of Object.entries(STATES)) {
-    const stubName = `__demo-stub-${state}.js`;
-    const pageName = `__demo-${state}.html`;
-    writeFileSync(join(stage, stubName), stubSource(state));
-    writeFileSync(
-      join(stage, pageName),
-      html.replace(
-        '<script type="module" src="manager.js"></script>',
-        `<script src="${stubName}"></script>\n    <script type="module" src="manager.js"></script>`,
-      ),
-    );
+  const stubName = `__demo-stub-${only}.js`;
+  const pageName = `__demo-${only}.html`;
+  writeFileSync(join(stage, stubName), stubSource(only));
+  writeFileSync(
+    join(stage, pageName),
+    html.replace(
+      '<script type="module" src="manager.js"></script>',
+      `<script src="${stubName}"></script>\n    <script type="module" src="manager.js"></script>`,
+    ),
+  );
 
-    const out = join(outDir, `${state}.png`);
+  const out = join(outDir, `${only}.png`);
+  try {
     execFileSync(
       chrome,
       [
@@ -241,24 +307,26 @@ try {
         "--hide-scrollbars",
         "--force-color-profile=srgb",
         // Without this, file:// is an opaque origin and <script type="module">
-        // is refused by CORS — the page renders un-booted markup instead.
+        // is refused by CORS — the page renders un-booted markup instead, which
+        // looks close enough to right to fool you.
         "--allow-file-access-from-files",
         "--virtual-time-budget=4000",
         `--screenshot=${out}`,
         `--window-size=${WIDTH},${HEIGHT}`,
-        `--user-data-dir=${join(work, `profile-${state}`)}`,
+        `--user-data-dir=${join(work, "profile")}`,
         `file://${join(stage, pageName)}`,
       ],
-      { stdio: "pipe", timeout: 90000 },
+      // Chrome takes ~3 minutes a shot on a cold profile. The old 3-minute
+      // ceiling landed right on top of that, so a capture that had already
+      // written its PNG still got killed and reported as a failure.
+      { stdio: "pipe", timeout: 600000 },
     );
-
-    const bytes = statSync(out).size;
-    if (bytes === 0) throw new Error(`${state}.png came out empty`);
-    console.log(`${state}.png  ${bytes} bytes  — ${config.note}`);
+  } catch (err) {
+    const detail = [err.stderr?.toString(), err.stdout?.toString(), err.message].filter(Boolean).join("\n");
+    throw new Error(`Chrome failed:\n${detail}`);
   }
+
+  if (statSync(out).size === 0) throw new Error(`${only}.png came out empty`);
 } finally {
   rmSync(work, { recursive: true, force: true });
 }
-
-console.log(`\nwrote ${Object.keys(STATES).length} screenshots to store/screenshots/ at ${WIDTH}x${HEIGHT}`);
-console.log("The store wants 1280x800 or 640x400 — these are ready to upload as they are.");

@@ -450,9 +450,9 @@ button.primary {
 }
 
 .support .about p {
-  margin: 0 0 13px;
-  font-size: 14px;
-  line-height: 1.62;
+  margin: 0 0 11px;
+  font-size: 13.5px;
+  line-height: 1.55;
   color: var(--muted);
 }
 
@@ -489,8 +489,8 @@ a.tip {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-top: 20px;
-  padding-top: 16px;
+  margin-top: 16px;
+  padding-top: 14px;
   border-top: 1px solid var(--line);
   opacity: 0.9;
 }
