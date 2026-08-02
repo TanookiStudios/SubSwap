@@ -7,6 +7,9 @@
   "scripts": {
     "check": "node scripts/check.mjs",
     "test": "node --test test/*.test.js",
-    "verify": "npm run check && npm test"
+    "verify": "npm run check && npm test",
+    "icons": "node scripts/icons.mjs",
+    "package": "node scripts/package.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
   }
 }

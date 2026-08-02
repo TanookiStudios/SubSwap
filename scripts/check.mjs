@@ -77,6 +77,18 @@ if (manifest) {
   const worker = manifest.background?.service_worker;
   if (!worker) fail("manifest.json has no background.service_worker");
   else if (!exists(join(root, worker))) fail(`background.service_worker points at a missing file: ${worker}`);
+
+  // The Web Store requires a 128px icon, and the toolbar wants the rest.
+  for (const size of ["16", "32", "48", "128"]) {
+    for (const [where, block] of [
+      ["icons", manifest.icons],
+      ["action.default_icon", manifest.action?.default_icon],
+    ]) {
+      const path = block?.[size];
+      if (!path) fail(`manifest.json ${where} is missing the ${size}px entry`);
+      else if (!exists(join(root, path))) fail(`${where}["${size}"] points at a missing file: ${path}`);
+    }
+  }
 }
 
 // --- html references -------------------------------------------------------

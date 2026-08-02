@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Source of truth for the icon set. scripts/icons.mjs renders this to the
+       PNG sizes the store and the toolbar need. Kept deliberately blunt: two
+       arrows swapping places still reads at 16px, where anything finer turns
+       to mush. -->
+  <rect width="128" height="128" rx="28" fill="#E5484D" />
+  <g fill="none" stroke="#ffffff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M36 51 H88" />
+    <path d="M76 39 L92 51 L76 63" />
+    <path d="M92 79 H40" />
+    <path d="M52 67 L36 79 L52 91" />
+  </g>
+</svg>

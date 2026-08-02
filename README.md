@@ -75,8 +75,27 @@ npm run verify
 ```
 
 That runs the static checks (`scripts/check.mjs` — parses every file, validates
-the manifest, confirms the injected scripts are self-contained) and the unit
-tests (`node --test`) over the pure logic in `src/lib`.
+the manifest, confirms the icons exist, confirms the injected scripts are
+self-contained) and the unit tests (`node --test`) over the pure logic in
+`src/lib`.
+
+| Command | What it does |
+| --- | --- |
+| `npm run verify` | Checks and tests. Run this before anything else |
+| `npm run icons` | Redraws `src/icons/*.png` from `assets/icon.svg` |
+| `npm run screenshots` | Captures store screenshots, headless, from fabricated data |
+| `npm run package` | Builds `dist/subswap-<version>.zip` for the Web Store |
+
+`npm run package` runs the checks first and then reads its own zip back to
+confirm `manifest.json` landed at the root and that no tests, scripts or
+READMEs got swept in — the two things the store rejects uploads for.
+
+## Releasing
+
+`store/listing.md` has the summary, description, permission justifications and
+privacy answers drafted, plus the pre-submit checklist.
+`store/privacy-policy.html` is ready to host — the store requires a public URL
+for it.
 
 Layout:
 
