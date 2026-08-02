@@ -779,23 +779,26 @@ function renderRun() {
 
 function renderSteps() {
   const running = Boolean(run && run.status === "running");
+  // A job that's under way, finished or not — paused counts, because you're
+  // coming back to it rather than starting something new.
+  const busy = Boolean(run && (run.status === "running" || run.status === "paused"));
 
   // Once there's a list saved, step 1 comes off the page entirely rather than
   // sitting there greyed out — everything below it moves up. The link under
   // the lists brings it back for a second account.
-  const foldStep1 = lists.length > 0 && !showStep1;
+  const foldStep1 = (lists.length > 0 && !showStep1) || busy;
   el("step-1").hidden = foldStep1;
-  el("show-step-1").hidden = !foldStep1 || running;
+  el("show-step-1").hidden = !foldStep1 || busy;
 
   el("step-1").classList.toggle("done", lists.length > 0);
   el("step-2").classList.toggle("done", Boolean(run && run.status === "finished" && !run.dryRun));
 
-  // Mid-run these can't be changed anyway, and hiding them gives the feed and
-  // the tip column the room they need. Disabling the export button also stops
-  // a scan being kicked off on top of a running job — both want the same
-  // working window, and the job would lose it.
-  el("lists").hidden = running;
-  el("practice-row").hidden = running;
+  // Strip step 2 back to the job while one is on. Everything comes back when
+  // it finishes, so you can pick another list.
+  el("step-2").classList.toggle("compact", busy);
+
+  // Also stops a scan being kicked off on top of a running job — both want the
+  // same working window, and the job would lose it.
   el("export-run").disabled = running;
 }
 

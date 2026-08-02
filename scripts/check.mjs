@@ -91,6 +91,26 @@ for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
 }
 if (!html.includes('type="module"')) fail("manager.html must load manager.js as a module");
 
+// --- the [hidden] trap -----------------------------------------------------
+//
+// The browser's own `[hidden] { display: none }` loses to any author rule that
+// sets display, so `.step { display: flex }` silently beat it and elements the
+// JS "hid" stayed on screen. Shipped that once; not again.
+
+const css = readFileSync(join(root, "src/manager.css"), "utf8");
+const managerJs = readFileSync(join(root, "src/manager.js"), "utf8");
+
+if (/\.hidden\s*=/.test(managerJs)) {
+  const guard = /\[hidden\]\s*\{[^}]*display:\s*none\s*!important/.test(css);
+  if (!guard) {
+    fail(
+      "manager.js sets .hidden on elements, but manager.css has no " +
+        "`[hidden] { display: none !important }` — any rule setting display will beat the " +
+        "browser default and nothing will actually hide",
+    );
+  }
+}
+
 // --- imports resolve -------------------------------------------------------
 
 for (const file of jsFiles) {

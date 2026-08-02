@@ -29,6 +29,13 @@
   box-sizing: border-box;
 }
 
+/* The browser's own [hidden] rule loses to any author rule that sets display,
+   so `.step { display: flex }` quietly beat it and nothing ever hid. Anything
+   using the hidden attribute needs this to actually work. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -521,6 +528,22 @@ a.tip {
 
 .step.done .step-no {
   background: var(--ok);
+}
+
+/* Mid-job, everything that isn't the job itself comes off the page: the step
+   number, the heading, the instructions you've already followed, the list
+   you've already picked. The job moves to the top. */
+#step-2.compact > .step-no,
+#step-2.compact > .step-body > h2,
+#step-2.compact > .step-body > .help,
+#step-2.compact > .step-body > #lists,
+#step-2.compact > .step-body > #show-step-1,
+#step-2.compact > .step-body > #practice-row {
+  display: none !important;
+}
+
+#step-2.compact .job {
+  margin-top: 18px;
 }
 
 /* Quiet text button — for getting step 1 back once it's been folded away. */
