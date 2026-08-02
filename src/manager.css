@@ -1,0 +1,293 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --ink: #14161a;
+  --muted: #6b7280;
+  --line: #e4e6ea;
+  --accent: #cc2b2b;
+  --ok: #1a7f45;
+  --warn: #a15c00;
+  --bad: #b32020;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1114;
+    --card: #171a1f;
+    --ink: #f2f3f5;
+    --muted: #9aa1ab;
+    --line: #272b32;
+    --accent: #ff5252;
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --bad: #f87171;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.topbar {
+  padding: 28px 24px 8px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 16px 24px 64px;
+  display: grid;
+  gap: 16px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.card h2 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+.help {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.keepopen {
+  margin: 14px 0 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.row:last-child {
+  margin-bottom: 0;
+}
+
+.row > label {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.checks label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font-size: 13.5px;
+}
+
+.pacing {
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.pacing input {
+  width: 64px;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 9px;
+}
+
+input[type="text"] {
+  min-width: 200px;
+}
+
+select {
+  min-width: 260px;
+}
+
+button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.segmented button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-weight: 500;
+}
+
+.segmented button.selected {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.status {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  color: var(--muted);
+  min-height: 1.2em;
+}
+
+.warn {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  font-size: 13.5px;
+}
+
+.progress {
+  margin-top: 14px;
+}
+
+.bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+
+.counts {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+#lists {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13.5px;
+}
+
+.list-item .name {
+  font-weight: 600;
+}
+
+.list-item .meta {
+  color: var(--muted);
+  margin-right: auto;
+}
+
+.list-item button {
+  padding: 5px 10px;
+  font-size: 13px;
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+#log {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  max-height: 340px;
+  overflow-y: auto;
+  font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+  border-top: 1px solid var(--line);
+}
+
+#log li {
+  padding: 3px 0;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 10px;
+}
+
+#log .time {
+  color: var(--muted);
+  flex: none;
+}
+
+#log li.ok .text {
+  color: var(--ok);
+}
+
+#log li.warn .text {
+  color: var(--warn);
+}
+
+#log li.bad .text {
+  color: var(--bad);
+}

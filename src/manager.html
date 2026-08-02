@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SubSwap</title>
+    <link rel="stylesheet" href="manager.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>SubSwap</h1>
+      <p class="tagline">Take your subscriptions from one YouTube account to another.</p>
+    </header>
+
+    <main>
+      <section class="card" id="export-card">
+        <h2>1 &middot; Export</h2>
+        <p class="help">
+          Sign into the <strong>old</strong> account, then scan. This only reads the page &mdash;
+          nothing is changed on your account.
+        </p>
+        <div class="row">
+          <label for="export-label">Save as</label>
+          <input id="export-label" type="text" placeholder="Old account" />
+          <button id="export-run" class="primary">Scan this account</button>
+        </div>
+        <p class="status" id="export-status"></p>
+      </section>
+
+      <section class="card">
+        <h2>Saved lists</h2>
+        <div id="lists"></div>
+        <div class="row">
+          <button id="import-file">Load a .json or Takeout .csv&hellip;</button>
+          <input id="file-input" type="file" accept=".json,.csv,text/csv,application/json" hidden />
+        </div>
+      </section>
+
+      <section class="card" id="run-card">
+        <h2>2 &middot; Subscribe</h2>
+        <p class="help">
+          Sign into the <strong>new</strong> account, pick a list, and go. Anything you're already
+          subscribed to is skipped.
+        </p>
+
+        <div class="row">
+          <label for="source-list">List</label>
+          <select id="source-list"></select>
+        </div>
+
+        <div class="row">
+          <label>Mode</label>
+          <div class="segmented" id="mode">
+            <button data-mode="auto" class="selected">Auto &mdash; it clicks</button>
+            <button data-mode="assist">Assist &mdash; you click</button>
+          </div>
+        </div>
+
+        <div class="row checks">
+          <label><input type="checkbox" id="scan-first" checked /> Scan this account first and skip duplicates</label>
+          <label><input type="checkbox" id="dry-run" checked /> Dry run (look, don't click)</label>
+        </div>
+
+        <div class="row pacing" id="pacing-row">
+          <label for="min-delay">Gap between subscribes</label>
+          <input id="min-delay" type="number" min="0" step="1" value="5" /> to
+          <input id="max-delay" type="number" min="0" step="1" value="10" /> seconds,
+          then a
+          <input id="batch-pause" type="number" min="0" step="5" value="60" /> second break every
+          <input id="batch-size" type="number" min="0" step="1" value="20" />
+        </div>
+
+        <div class="row">
+          <button id="run-start" class="primary">Start</button>
+          <button id="run-pause" disabled>Pause</button>
+          <button id="run-stop" disabled>Stop</button>
+          <button id="run-retry" hidden>Retry failures</button>
+          <button id="run-reset" hidden>Reset and run for real</button>
+        </div>
+
+        <div class="progress" id="progress" hidden>
+          <div class="bar"><div class="fill" id="progress-fill"></div></div>
+          <p class="counts" id="progress-counts"></p>
+        </div>
+
+        <p class="warn" id="run-warning" hidden></p>
+        <p class="help keepopen">Leave this tab open while a run is going. Closing it stops the run &mdash; but the queue is saved, so you can pick it up again.</p>
+      </section>
+
+      <section class="card">
+        <h2>Log</h2>
+        <div class="row">
+          <button id="log-clear">Clear</button>
+          <button id="log-copy">Copy</button>
+        </div>
+        <ol id="log"></ol>
+      </section>
+    </main>
+
+    <script type="module" src="manager.js"></script>
+  </body>
+</html>
