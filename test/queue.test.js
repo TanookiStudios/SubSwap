@@ -41,6 +41,18 @@ test("mode defaults to auto and only accepts assist as an alternative", () => {
   assert.equal(createQueue(channels, { mode: "nonsense" }).mode, "auto");
 });
 
+test("hiding the working window is on by default and can be turned off", () => {
+  assert.equal(createQueue(channels).hideWindow, true);
+  assert.equal(createQueue(channels, { hideWindow: false }).hideWindow, false);
+  assert.equal(createQueue(channels, { hideWindow: true }).hideWindow, true);
+});
+
+test("a queue saved before hideWindow existed still hides by default", () => {
+  const old = JSON.parse(JSON.stringify(createQueue(channels)));
+  delete old.hideWindow;
+  assert.notEqual(old.hideWindow, false, "the manager treats anything but false as hide");
+});
+
 test("marking is immutable — the original queue is untouched", () => {
   const queue = createQueue(channels);
   const after = markDone(queue, 0);

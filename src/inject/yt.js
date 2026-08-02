@@ -169,24 +169,28 @@ export function ytAction(action, options) {
     document.documentElement.appendChild(style);
   }
 
-  function buildOverlay() {
+  function buildOverlay(withControls) {
     ensureStyle();
     let overlay = document.getElementById(OVERLAY_ID);
     if (!overlay) {
       overlay = document.createElement("div");
       overlay.id = OVERLAY_ID;
-      overlay.innerHTML =
-        '<span class="subswap-count"></span>' +
-        '<span class="subswap-name"></span>' +
-        '<span class="subswap-hint" style="opacity:.6">Click Subscribe &rarr;</span>' +
-        "<button data-subswap=\"skip\">Skip</button>" +
-        "<button data-subswap=\"stop\">Stop</button>";
       overlay.addEventListener("click", (event) => {
         const target = event.target.closest("[data-subswap]");
         if (!target) return;
         window.__subswapSignal = target.getAttribute("data-subswap");
       });
       document.documentElement.appendChild(overlay);
+    }
+    if (overlay.dataset.controls !== String(Boolean(withControls))) {
+      overlay.dataset.controls = String(Boolean(withControls));
+      overlay.innerHTML =
+        '<span class="subswap-count"></span>' +
+        '<span class="subswap-name"></span>' +
+        '<span class="subswap-hint" style="opacity:.6"></span>' +
+        (withControls
+          ? '<button data-subswap="skip">Skip</button><button data-subswap="stop">Stop</button>'
+          : "");
     }
     return overlay;
   }
@@ -210,11 +214,23 @@ export function ytAction(action, options) {
     return { cleared: true };
   }
 
+  // Shown when the working window is on screen, so nobody wonders what this
+  // window is, closes it, or starts clicking around in it.
+  if (action === "notice") {
+    const overlay = buildOverlay(false);
+    overlay.querySelector(".subswap-count").textContent = opts.position || "";
+    overlay.querySelector(".subswap-name").textContent = "SubSwap is working";
+    overlay.querySelector(".subswap-hint").textContent =
+      opts.text || "Leave this window alone — it closes itself when it's done.";
+    return { noticed: true };
+  }
+
   if (action === "highlight") {
     const parts = findParts();
-    const overlay = buildOverlay();
+    const overlay = buildOverlay(true);
     overlay.querySelector(".subswap-count").textContent = opts.position || "";
     overlay.querySelector(".subswap-name").textContent = opts.name || "";
+    overlay.querySelector(".subswap-hint").textContent = "Click Subscribe →";
     if (parts.button) {
       parts.button.classList.add(RING_CLASS);
       parts.button.scrollIntoView({ block: "center", behavior: "smooth" });

@@ -17,6 +17,8 @@ let lists = [];
 let run = null;
 let logLines = [];
 let workerTabId = null;
+let workerWindowId = null;
+let windowHidden = false;
 let loopToken = 0;
 
 // ---------------------------------------------------------------- timers
@@ -81,24 +83,55 @@ async function sleep(ms, abort = () => false) {
 
 // ------------------------------------------------------------- worker tab
 
+// Minimised is as close to invisible as an extension can get with someone
+// else's site — there's no off-screen tab for third-party pages. It's better
+// than a small window, too: the window keeps its size internally, so YouTube's
+// layout doesn't change and none of the selectors shift under us.
+//
+// It can't be used for scanning, though. A minimised window stops painting, and
+// YouTube only loads the next batch of subscriptions when the page is actually
+// rendering — so a hidden scan quietly returns a fraction of the list.
+async function setWindowHidden(hidden) {
+  if (workerWindowId == null) return;
+  try {
+    await chrome.windows.update(workerWindowId, { state: hidden ? "minimized" : "normal" });
+    windowHidden = hidden;
+  } catch {
+    workerWindowId = null;
+  }
+}
+
 // Navigate the working tab, creating it (in its own window) if need be, and
 // wait until the page says it's done.
-async function goTo(url, focus) {
+async function goTo(url, options = {}) {
+  const { focus = false, hidden = false } = options;
   let existing = null;
   if (workerTabId != null) {
     try {
       existing = await chrome.tabs.get(workerTabId);
     } catch {
       workerTabId = null;
+      workerWindowId = null;
     }
   }
 
   if (!existing) {
-    const win = await chrome.windows.create({ url, focused: Boolean(focus), width: 1180, height: 900 });
+    const win = await chrome.windows.create({
+      url,
+      focused: !hidden && Boolean(focus),
+      width: 1180,
+      height: 900,
+    });
     workerTabId = win.tabs[0].id;
+    workerWindowId = win.id;
+    windowHidden = false;
     await waitForLoad(workerTabId, 30000);
+    if (hidden) await setWindowHidden(true);
     return workerTabId;
   }
+
+  workerWindowId = existing.windowId;
+  if (hidden !== windowHidden) await setWindowHidden(hidden);
 
   const loaded = waitForLoad(workerTabId, 30000);
   // Re-issuing the URL a tab is already sitting on doesn't reliably produce a
@@ -108,7 +141,7 @@ async function goTo(url, focus) {
   } else {
     await chrome.tabs.update(workerTabId, { url, active: true });
   }
-  if (focus) await chrome.windows.update(existing.windowId, { focused: true });
+  if (focus && !hidden) await chrome.windows.update(existing.windowId, { focused: true });
   await loaded;
   return workerTabId;
 }
@@ -196,6 +229,7 @@ function readSettings() {
     mode: el("mode").querySelector(".selected").dataset.mode,
     scanFirst: el("scan-first").checked,
     dryRun: el("dry-run").checked,
+    hideWindow: el("hide-window").checked,
     pacing: {
       minDelayMs: Math.max(0, Number(el("min-delay").value) * 1000),
       maxDelayMs: Math.max(0, Number(el("max-delay").value) * 1000),
@@ -209,6 +243,7 @@ function applySettings(settings) {
   if (settings.mode) selectMode(settings.mode);
   if (typeof settings.scanFirst === "boolean") el("scan-first").checked = settings.scanFirst;
   if (typeof settings.dryRun === "boolean") el("dry-run").checked = settings.dryRun;
+  if (typeof settings.hideWindow === "boolean") el("hide-window").checked = settings.hideWindow;
   const pacing = settings.pacing || {};
   if (pacing.minDelayMs != null) el("min-delay").value = pacing.minDelayMs / 1000;
   if (pacing.maxDelayMs != null) el("max-delay").value = pacing.maxDelayMs / 1000;
@@ -224,8 +259,13 @@ function selectMode(mode) {
 
 // --------------------------------------------------------------- scanning
 
-async function scanAccount(focus = true) {
-  const tabId = await goTo(SUBSCRIPTIONS_URL, focus);
+async function scanAccount() {
+  // Always on screen — see setWindowHidden for why a hidden scan under-reports.
+  const tabId = await goTo(SUBSCRIPTIONS_URL, { focus: true, hidden: false });
+  await inject(tabId, ytAction, [
+    "notice",
+    { text: "Reading your subscriptions — leave this window alone, it scrolls itself." },
+  ]).catch(() => {});
   const result = await inject(tabId, scrapeSubscriptions, [{}]);
   if (!result) throw new Error("The page didn't respond. Is the YouTube tab still open?");
   if (!result.ok || result.items.length === 0) {
@@ -280,9 +320,13 @@ async function step(index, clicks) {
   const counts = Q.progress(run);
   const position = `${counts.processed + 1} of ${counts.total}`;
 
+  // Assist mode needs the window in front — you're the one clicking.
+  const assist = run.mode === "assist";
+  const hidden = !assist && run.hideWindow !== false;
+
   let tabId;
   try {
-    tabId = await goTo(item.channel.url, run.mode === "assist");
+    tabId = await goTo(item.channel.url, { focus: assist, hidden });
   } catch (err) {
     run = Q.markFailed(run, index, `Couldn't open the page: ${err.message}`);
     log(`${name} — couldn't open ${item.channel.url}`, "bad");
@@ -318,13 +362,16 @@ async function step(index, clicks) {
     return { clicks, throttled: false };
   }
 
-  if (run.mode === "assist") {
+  if (assist) {
     return await assistStep(tabId, index, name, position, clicks);
+  }
+  if (!hidden) {
+    await inject(tabId, ytAction, ["notice", { position }]).catch(() => {});
   }
   return await autoStep(tabId, index, name, clicks);
 }
 
-async function autoStep(tabId, index, name, clicks) {
+async function autoStep(tabId, index, name, clicks, isRetry = false) {
   const result = await inject(tabId, ytAction, ["click", {}]);
 
   if (!result || (!result.clicked && result.reason === "button-not-found")) {
@@ -343,6 +390,28 @@ async function autoStep(tabId, index, name, clicks) {
     run = Q.markDone(run, index, null);
     log(`${name} — subscribed`, "ok");
     return { clicks: clicks + 1, throttled: false };
+  }
+
+  // A miss while the window is hidden is ambiguous: it could be YouTube
+  // rate-limiting, or it could be that this page needed to be on screen. Bring
+  // the window up and give it exactly one more go before blaming YouTube —
+  // otherwise hiding the window would masquerade as throttling and stop a run
+  // that was fine.
+  if (!isRetry && windowHidden) {
+    log(`${name} — didn't take while hidden, showing the window and retrying once`);
+    await setWindowHidden(false);
+    await chrome.tabs.reload(tabId);
+    await waitForLoad(tabId, 30000);
+    const ready = await probeUntilReady(tabId);
+    if (ready && ready.subscribed === true) {
+      run = Q.markDone(run, index, null);
+      log(`${name} — subscribed`, "ok");
+      await setWindowHidden(true);
+      return { clicks: clicks + 1, throttled: false };
+    }
+    const retried = await autoStep(tabId, index, name, clicks, true);
+    await setWindowHidden(true);
+    return retried;
   }
 
   const reason = (confirmed && confirmed.toast) || "The click didn't take.";
@@ -440,12 +509,25 @@ async function loop() {
         : `Finished — ${counts.done} subscribed, ${counts.skipped} skipped, ${counts.failed} failed.`,
       counts.failed > 0 ? "warn" : "ok",
     );
-    if (workerTabId != null) {
-      inject(workerTabId, ytAction, ["clear", {}]).catch(() => {});
-    }
+    await closeWorkerWindow();
   }
   await save();
   render();
+}
+
+// Tidy up when the run ends on its own. The notice tells people this window
+// closes itself, so it has to actually do that.
+async function closeWorkerWindow() {
+  const windowId = workerWindowId;
+  workerTabId = null;
+  workerWindowId = null;
+  windowHidden = false;
+  if (windowId == null) return;
+  try {
+    await chrome.windows.remove(windowId);
+  } catch {
+    // Already gone.
+  }
 }
 
 function pauseRun(reason) {
@@ -453,6 +535,9 @@ function pauseRun(reason) {
   run = Q.setStatus(run, "paused", reason);
   loopToken += 1;
   log(reason, "warn");
+  // Never leave a minimised window behind — if something needs looking at,
+  // it needs to be visible.
+  setWindowHidden(false);
   save();
   render();
 }
@@ -496,6 +581,7 @@ async function startRun() {
     run = Q.createQueue(source, {
       mode: settings.mode,
       dryRun: settings.dryRun,
+      hideWindow: settings.hideWindow,
       pacing: settings.pacing,
       now: Date.now(),
     });
@@ -691,7 +777,7 @@ el("run-pause").addEventListener("click", () => pauseRun("Paused."));
 el("run-stop").addEventListener("click", async () => {
   loopToken += 1;
   run = Q.setStatus(run, "paused", "Stopped. The queue is kept — Resume picks up where you left off.");
-  if (workerTabId != null) inject(workerTabId, ytAction, ["clear", {}]).catch(() => {});
+  await closeWorkerWindow();
   await save();
   render();
 });
@@ -723,13 +809,15 @@ el("log-copy").addEventListener("click", async () => {
   await navigator.clipboard.writeText(text);
 });
 
-for (const id of ["scan-first", "dry-run", "min-delay", "max-delay", "batch-size", "batch-pause"]) {
+for (const id of ["scan-first", "dry-run", "hide-window", "min-delay", "max-delay", "batch-size", "batch-pause"]) {
   el(id).addEventListener("change", save);
 }
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   if (tabId !== workerTabId) return;
   workerTabId = null;
+  workerWindowId = null;
+  windowHidden = false;
   if (run && run.status === "running") pauseRun("The YouTube tab was closed. Resume when you're ready.");
 });
 

@@ -34,6 +34,13 @@ profiles).
 Already have a Google Takeout export? Load the CSV instead — same thing, no scan
 needed.
 
+The YouTube window it uses stays minimised while it subscribes, so it isn't
+sitting there inviting you to click it. It has to be on screen for the few
+seconds it spends *reading* your list, though — a minimised window stops
+painting, and YouTube only loads the next batch of channels while the page is
+actually rendering. It closes itself when the run finishes, and pops back up if
+something needs your attention.
+
 **Subscribe.** Sign into the new account, pick the list, choose a mode:
 
 - **Auto** — SubSwap clicks Subscribe for you, with a random gap between each

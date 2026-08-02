@@ -21,6 +21,8 @@ export function createQueue(channels, options = {}) {
     createdAt: options.now ?? 0,
     mode: options.mode === "assist" ? "assist" : "auto",
     dryRun: Boolean(options.dryRun),
+    // Assist mode ignores this — you can't click a window you can't see.
+    hideWindow: options.hideWindow !== false,
     pacing: { ...DEFAULT_PACING, ...(options.pacing || {}) },
     status: "idle", // idle | running | paused | finished
     pauseReason: null,
