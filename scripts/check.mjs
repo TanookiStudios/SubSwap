@@ -85,6 +85,8 @@ const html = readFileSync(join(root, "src/manager.html"), "utf8");
 for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
   const target = match[1];
   if (/^(https?:)?\/\//.test(target)) continue;
+  // Fragments, mailto: and data: aren't files on disk.
+  if (/^(#|mailto:|data:|tel:)/.test(target)) continue;
   if (!exists(join(root, "src", target))) fail(`manager.html references a missing file: ${target}`);
 }
 if (!html.includes('type="module"')) fail("manager.html must load manager.js as a module");

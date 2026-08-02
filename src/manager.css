@@ -259,8 +259,204 @@ button.primary {
   font-size: 13.5px;
 }
 
-.progress {
-  margin-top: 14px;
+/* The list of saved exports, as pickable cards rather than a dropdown. */
+.lists {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.list-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: transparent;
+  font-weight: 500;
+}
+
+.list-card[aria-pressed="true"] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.list-card .tick {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid var(--line);
+}
+
+.list-card[aria-pressed="true"] .tick {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 3px var(--card);
+}
+
+.list-card .name {
+  font-weight: 650;
+}
+
+.list-card .meta {
+  color: var(--muted);
+  font-size: 13px;
+  margin-right: auto;
+}
+
+.list-card .kill {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 4px 8px;
+  font-weight: 400;
+}
+
+.list-card .kill:hover {
+  color: var(--bad);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* The running job. */
+.job-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.job-head h2 {
+  margin: 0;
+}
+
+.job-counts {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.now {
+  margin: 12px 0 0;
+  font-weight: 600;
+  min-height: 1.4em;
+}
+
+#feed {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  border-top: 1px solid var(--line);
+}
+
+#feed li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 7px 2px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+#feed .dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--muted);
+  transform: translateY(-1px);
+}
+
+#feed li.ok .dot {
+  background: var(--ok);
+}
+
+#feed li.warn .dot {
+  background: var(--warn);
+}
+
+#feed li.bad .dot {
+  background: var(--bad);
+}
+
+#feed .time {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  flex: none;
+}
+
+/* Support panel. */
+.support .saved {
+  margin: 0 0 18px;
+  font-size: 17px;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+}
+
+.support .about p {
+  margin: 0 0 14px;
+  max-width: 62ch;
+  line-height: 1.62;
+  color: var(--ink);
+}
+
+.support .about p:last-child {
+  margin-bottom: 0;
+}
+
+a.tip {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 11px 20px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.tip-missing {
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--warn);
+}
+
+.sign {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+  opacity: 0.9;
+}
+
+.sign svg {
+  display: block;
+  color: var(--ink);
+}
+
+.sign-name {
+  margin: 0;
+  font-weight: 620;
+  font-size: 16px;
+}
+
+.sign-role {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--muted);
 }
 
 .bar {
@@ -277,77 +473,16 @@ button.primary {
   transition: width 0.25s ease;
 }
 
-.counts {
-  margin: 8px 0 0;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-#lists {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.list-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 11px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  font-size: 13.5px;
-}
-
-.list-item .name {
-  font-weight: 600;
-}
-
-.list-item .meta {
-  color: var(--muted);
-  margin-right: auto;
-}
-
-.list-item button {
-  padding: 5px 10px;
-  font-size: 13px;
-}
-
 .empty {
   color: var(--muted);
   font-size: 13.5px;
 }
 
-#log {
-  list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
-  max-height: 340px;
-  overflow-y: auto;
-  font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
-  border-top: 1px solid var(--line);
+/* A step that's been done fades back so the live one is obvious. */
+.step.done {
+  opacity: 0.55;
 }
 
-#log li {
-  padding: 3px 0;
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  gap: 10px;
-}
-
-#log .time {
-  color: var(--muted);
-  flex: none;
-}
-
-#log li.ok .text {
-  color: var(--ok);
-}
-
-#log li.warn .text {
-  color: var(--warn);
-}
-
-#log li.bad .text {
-  color: var(--bad);
+.step.done .step-no {
+  background: var(--ok);
 }

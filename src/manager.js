@@ -5,16 +5,28 @@
 import * as Q from "./lib/queue.js";
 import { dedupe, diffChannels, displayName } from "./lib/channels.js";
 import { parseTakeoutCsv } from "./lib/takeout.js";
+import { humanDuration } from "./lib/format.js";
 import { scrapeSubscriptions } from "./inject/scrape.js";
 import { ytAction } from "./inject/yt.js";
 
 const SUBSCRIPTIONS_URL = "https://www.youtube.com/feed/channels";
 const MAX_LOG = 500;
 
+// Where the tip button points. Leave it empty and the button doesn't render —
+// better no button than a dead link. Paste a Ko-fi / Polar / PayPal URL here.
+const SUPPORT_URL = "";
+
+// Doing one by hand is: search for the channel, wait for results, pick the right
+// one, load it, click Subscribe. Half a minute is a fair, unshowy estimate — it
+// only ever gets quoted as "about", and overstating it would be tacky.
+const MANUAL_SECONDS_EACH = 30;
+
 const el = (id) => document.getElementById(id);
 
 let lists = [];
 let run = null;
+let selectedListId = null;
+let stats = { subscribed: 0 };
 let logLines = [];
 let workerTabId = null;
 let workerWindowId = null;
@@ -69,11 +81,13 @@ function tick(ms) {
   return new Promise((resolve) => armWait({ until: Date.now() + ms, resolve }));
 }
 
-// Waits `ms`, in short hops, giving up early if `abort()` goes true.
-async function sleep(ms, abort = () => false) {
+// Waits `ms`, in one-second hops, giving up early if `abort()` goes true.
+// `onTick` gets the milliseconds left, which is what drives the countdown.
+async function sleep(ms, abort = () => false, onTick = null) {
   let left = ms;
   while (left > 0) {
     if (abort()) return false;
+    if (onTick) onTick(left);
     const chunk = Math.min(left, 1000);
     await tick(chunk);
     left -= chunk;
@@ -199,10 +213,12 @@ async function waitForSubscribed(tabId, ms) {
 // --------------------------------------------------------------- storage
 
 async function load() {
-  const data = await chrome.storage.local.get(["lists", "run", "log", "settings"]);
+  const data = await chrome.storage.local.get(["lists", "run", "log", "settings", "stats"]);
   lists = data.lists || [];
   run = data.run || null;
   logLines = data.log || [];
+  stats = { subscribed: 0, ...(data.stats || {}) };
+  selectedListId = lists.length > 0 ? lists[0].id : null;
   if (run && run.status === "running") {
     run = Q.setStatus(run, "paused", "Interrupted — this tab was closed mid-run. Resume when ready.");
   }
@@ -210,17 +226,23 @@ async function load() {
 }
 
 async function save() {
-  await chrome.storage.local.set({ lists, run, log: logLines, settings: readSettings() });
+  await chrome.storage.local.set({ lists, run, log: logLines, stats, settings: readSettings() });
 }
 
-// ------------------------------------------------------------------- log
+// ------------------------------------------------------------------- feed
 
 function log(text, level = "") {
-  const stamp = new Date().toLocaleTimeString();
+  const stamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   logLines.push({ stamp, text, level });
   if (logLines.length > MAX_LOG) logLines = logLines.slice(-MAX_LOG);
-  renderLog();
+  renderFeed();
 }
+
+// The one-line "what's happening right now" under the progress bar.
+function setNow(text) {
+  el("now-line").textContent = text || "";
+}
+
 
 // ------------------------------------------------------------- settings
 
@@ -286,23 +308,28 @@ async function doExport() {
   el("export-status").textContent =
     "Working… a YouTube window will open and scroll itself. Leave it be for a few seconds.";
   try {
-    const channels = await scanAccount(true);
+    const channels = await scanAccount();
     const label =
       el("export-label").value.trim() ||
       (lists.length === 0 ? "My subscriptions" : `My subscriptions ${lists.length + 1}`);
-    lists.unshift({
-      id: `list-${Date.now()}`,
-      label,
-      savedAt: Date.now(),
-      items: channels,
-    });
+    const list = { id: `list-${Date.now()}`, label, savedAt: Date.now(), items: channels };
+    lists.unshift(list);
+    selectedListId = list.id;
+    el("export-label").value = "";
+
+    // The list is captured, so the YouTube window has no reason to still be
+    // sitting there — shut it and move them on to step 2.
+    await closeWorkerWindow();
     await save();
-    el("export-status").textContent = `Saved “${label}” — ${channels.length} channels.`;
-    log(`Exported ${channels.length} channels as “${label}”.`, "ok");
+
+    el("export-status").textContent = `Saved “${label}” — ${channels.length} channels. On to step 2.`;
+    el("step-1").classList.add("done");
+    log(`Saved ${channels.length} channels as “${label}”.`, "ok");
     render();
+    el("step-2").scrollIntoView({ behavior: "smooth", block: "center" });
   } catch (err) {
     el("export-status").textContent = err.message;
-    log(`Export failed: ${err.message}`, "bad");
+    log(`Couldn't read your subscriptions: ${err.message}`, "bad");
   } finally {
     button.disabled = false;
   }
@@ -324,12 +351,14 @@ async function step(index, clicks) {
   const assist = run.mode === "assist";
   const hidden = !assist && run.hideWindow !== false;
 
+  setNow(`Opening ${name}…`);
+
   let tabId;
   try {
     tabId = await goTo(item.channel.url, { focus: assist, hidden });
   } catch (err) {
     run = Q.markFailed(run, index, `Couldn't open the page: ${err.message}`);
-    log(`${name} — couldn't open ${item.channel.url}`, "bad");
+    log(`Couldn't open ${name}'s page`, "bad");
     return { clicks, throttled: false };
   }
 
@@ -337,30 +366,32 @@ async function step(index, clicks) {
 
   if (!state) {
     run = Q.markFailed(run, index, "No response from the page.");
-    log(`${name} — page didn't respond`, "bad");
+    log(`${name}'s page didn't load properly`, "bad");
     return { clicks, throttled: false };
   }
   if (state.missingChannel) {
     run = Q.markFailed(run, index, "Channel not found — it may have been deleted or renamed.");
-    log(`${name} — channel not found`, "bad");
+    log(`${name} doesn't exist any more`, "bad");
     return { clicks, throttled: false };
   }
   if (state.subscribed === true) {
     run = Q.markSkipped(run, index, "Already subscribed.");
-    log(`${name} — already subscribed, skipped`);
+    log(`Already following ${name}`);
     return { clicks, throttled: false };
   }
   if (!state.found) {
     run = Q.markFailed(run, index, "Couldn't find the Subscribe button on the page.");
-    log(`${name} — no Subscribe button found`, "bad");
+    log(`Couldn't find the Subscribe button on ${name}'s page`, "bad");
     return { clicks, throttled: false };
   }
 
   if (run.dryRun) {
     run = Q.markDone(run, index, "Dry run — would have subscribed.");
-    log(`${name} — would subscribe (dry run)`, "ok");
+    log(`Would have subscribed to ${name}`, "ok");
     return { clicks, throttled: false };
   }
+
+  setNow(`Subscribing to ${name}…`);
 
   if (assist) {
     return await assistStep(tabId, index, name, position, clicks);
@@ -376,19 +407,20 @@ async function autoStep(tabId, index, name, clicks, isRetry = false) {
 
   if (!result || (!result.clicked && result.reason === "button-not-found")) {
     run = Q.markFailed(run, index, "Subscribe button vanished before the click landed.");
-    log(`${name} — Subscribe button vanished`, "bad");
+    log(`The Subscribe button vanished on ${name}'s page`, "bad");
     return { clicks, throttled: false };
   }
   if (!result.clicked && result.reason === "already-subscribed") {
     run = Q.markSkipped(run, index, "Already subscribed.");
-    log(`${name} — already subscribed, skipped`);
+    log(`Already following ${name}`);
     return { clicks, throttled: false };
   }
 
   const confirmed = await waitForSubscribed(tabId, 8000);
   if (confirmed && confirmed.subscribed === true) {
     run = Q.markDone(run, index, null);
-    log(`${name} — subscribed`, "ok");
+    stats.subscribed += 1;
+    log(`Subscribed to ${name}`, "ok");
     return { clicks: clicks + 1, throttled: false };
   }
 
@@ -398,14 +430,16 @@ async function autoStep(tabId, index, name, clicks, isRetry = false) {
   // otherwise hiding the window would masquerade as throttling and stop a run
   // that was fine.
   if (!isRetry && windowHidden) {
-    log(`${name} — didn't take while hidden, showing the window and retrying once`);
+    setNow(`Retrying ${name}…`);
+    log(`${name} didn't take first time — trying once more`, "warn");
     await setWindowHidden(false);
     await chrome.tabs.reload(tabId);
     await waitForLoad(tabId, 30000);
     const ready = await probeUntilReady(tabId);
     if (ready && ready.subscribed === true) {
       run = Q.markDone(run, index, null);
-      log(`${name} — subscribed`, "ok");
+      stats.subscribed += 1;
+      log(`Subscribed to ${name}`, "ok");
       await setWindowHidden(true);
       return { clicks: clicks + 1, throttled: false };
     }
@@ -416,12 +450,13 @@ async function autoStep(tabId, index, name, clicks, isRetry = false) {
 
   const reason = (confirmed && confirmed.toast) || "The click didn't take.";
   run = Q.markFailed(run, index, reason);
-  log(`${name} — not confirmed: ${reason}`, "warn");
+  log(`Couldn't subscribe to ${name} — ${reason}`, "warn");
   return { clicks, throttled: true };
 }
 
 async function assistStep(tabId, index, name, position, clicks) {
   await inject(tabId, ytAction, ["highlight", { position, name }]);
+  setNow(`Waiting for you to click Subscribe on ${name}…`);
   const deadline = Date.now() + 5 * 60 * 1000;
 
   while (Date.now() < deadline) {
@@ -447,20 +482,21 @@ async function assistStep(tabId, index, name, position, clicks) {
     if (state.signal === "skip") {
       await inject(tabId, ytAction, ["clear", {}]).catch(() => {});
       run = Q.markSkipped(run, index, "Skipped by you.");
-      log(`${name} — skipped`);
+      log(`Skipped ${name}`);
       return { clicks, throttled: false };
     }
     if (state.subscribed === true) {
       await inject(tabId, ytAction, ["clear", {}]).catch(() => {});
       run = Q.markDone(run, index, null);
-      log(`${name} — subscribed`, "ok");
+      stats.subscribed += 1;
+      log(`Subscribed to ${name}`, "ok");
       return { clicks: clicks + 1, throttled: false };
     }
   }
 
   await inject(tabId, ytAction, ["clear", {}]).catch(() => {});
   run = Q.markFailed(run, index, "Waited five minutes with no click.");
-  log(`${name} — timed out waiting for a click`, "warn");
+  log(`Gave up waiting for a click on ${name}`, "warn");
   return { clicks, throttled: false };
 }
 
@@ -493,8 +529,16 @@ async function loop() {
 
     const delay = Q.delayFor(run, clicks, Math.random());
     if (delay > 0) {
-      if (delay >= 10000) log(`Taking a ${Math.round(delay / 1000)} second breather…`);
-      await sleep(delay, abortCheck);
+      const isBreak = delay >= 20000;
+      if (isBreak) log(`Taking a ${Math.round(delay / 1000)} second break to keep your account safe`);
+      await sleep(delay, abortCheck, (left) => {
+        const seconds = Math.ceil(left / 1000);
+        setNow(
+          isBreak
+            ? `Taking a ${seconds} second break — going slowly is what keeps your account safe.`
+            : `Next one in ${seconds}…`,
+        );
+      });
     }
   }
 
@@ -505,10 +549,11 @@ async function loop() {
     const counts = Q.progress(run);
     log(
       run.dryRun
-        ? `Dry run finished — ${counts.done} would be subscribed, ${counts.skipped} already there, ${counts.failed} problem${counts.failed === 1 ? "" : "s"}.`
-        : `Finished — ${counts.done} subscribed, ${counts.skipped} skipped, ${counts.failed} failed.`,
+        ? `Practice run done — ${counts.done} would be subscribed, ${counts.skipped} already followed, ${counts.failed} problem${counts.failed === 1 ? "" : "s"}.`
+        : `All done — subscribed to ${counts.done}, skipped ${counts.skipped}, ${counts.failed} didn't work.`,
       counts.failed > 0 ? "warn" : "ok",
     );
+    setNow("");
     await closeWorkerWindow();
   }
   await save();
@@ -553,9 +598,10 @@ async function startRun() {
     return;
   }
 
-  const list = lists.find((l) => l.id === el("source-list").value);
+  const list = lists.find((l) => l.id === selectedListId);
   if (!list) {
     log("Pick a list first.", "warn");
+    render();
     return;
   }
 
@@ -565,15 +611,16 @@ async function startRun() {
   try {
     let source = dedupe(list.items);
     if (settings.scanFirst) {
-      log("Scanning this account so we can skip anything you already follow…");
-      const existing = await scanAccount(true);
+      log("Checking what this account already follows…");
+      const existing = await scanAccount();
       const before = source.length;
       source = diffChannels(source, existing);
-      log(`${existing.length} already subscribed here — ${before - source.length} of the list can be skipped.`);
+      await closeWorkerWindow();
+      log(`You already follow ${existing.length} here, so ${before - source.length} can be skipped.`);
     }
 
     if (source.length === 0) {
-      log("Nothing to do — you're already subscribed to everything on that list.", "ok");
+      log("Nothing to do — you already follow everything on that list.", "ok");
       el("run-start").disabled = false;
       return;
     }
@@ -587,10 +634,13 @@ async function startRun() {
     });
     run = Q.setStatus(run, "running");
     log(
-      `${settings.dryRun ? "Dry run" : settings.mode === "assist" ? "Assist run" : "Auto run"} starting — ${source.length} channels.`,
+      settings.dryRun
+        ? `Practice run starting — ${source.length} channels to check.`
+        : `Starting on ${source.length} channels.`,
     );
     await save();
     render();
+    el("job").scrollIntoView({ behavior: "smooth", block: "start" });
     loop();
   } catch (err) {
     log(`Couldn't start: ${err.message}`, "bad");
@@ -605,20 +655,31 @@ async function startRun() {
 function render() {
   renderLists();
   renderRun();
+  renderSupport();
+  renderSteps();
 }
 
 function renderLists() {
   const box = el("lists");
   box.textContent = "";
+
   if (lists.length === 0) {
     const empty = document.createElement("p");
     empty.className = "empty";
-    empty.textContent = "No lists yet. Scan an account above, or load a file.";
+    empty.textContent = "Nothing saved yet — do step 1 first, or load a file from Settings.";
     box.appendChild(empty);
+    return;
   }
+  if (!lists.some((l) => l.id === selectedListId)) selectedListId = lists[0].id;
+
   for (const list of lists) {
-    const row = document.createElement("div");
-    row.className = "list-item";
+    const card = document.createElement("button");
+    card.className = "list-card";
+    card.type = "button";
+    card.setAttribute("aria-pressed", String(list.id === selectedListId));
+
+    const tick = document.createElement("span");
+    tick.className = "tick";
 
     const name = document.createElement("span");
     name.className = "name";
@@ -626,36 +687,38 @@ function renderLists() {
 
     const meta = document.createElement("span");
     meta.className = "meta";
-    meta.textContent = `${list.items.length} channels · ${new Date(list.savedAt).toLocaleDateString()}`;
+    meta.textContent = `${list.items.length} channels · saved ${new Date(list.savedAt).toLocaleDateString()}`;
 
-    const download = document.createElement("button");
-    download.textContent = "Download";
-    download.addEventListener("click", () => downloadList(list));
+    const download = document.createElement("span");
+    download.className = "kill";
+    download.setAttribute("role", "button");
+    download.tabIndex = 0;
+    download.textContent = "Save to a file";
+    download.addEventListener("click", (event) => {
+      event.stopPropagation();
+      downloadList(list);
+    });
 
-    const remove = document.createElement("button");
+    const remove = document.createElement("span");
+    remove.className = "kill";
+    remove.setAttribute("role", "button");
+    remove.tabIndex = 0;
     remove.textContent = "Delete";
-    remove.addEventListener("click", async () => {
+    remove.addEventListener("click", async (event) => {
+      event.stopPropagation();
       lists = lists.filter((l) => l.id !== list.id);
       await save();
       render();
     });
 
-    row.append(name, meta, download, remove);
-    box.appendChild(row);
-  }
+    card.addEventListener("click", () => {
+      selectedListId = list.id;
+      renderLists();
+    });
 
-  const select = el("source-list");
-  const previous = select.value;
-  select.textContent = "";
-  for (const list of lists) {
-    const option = document.createElement("option");
-    option.value = list.id;
-    option.textContent = `${list.label} (${list.items.length})`;
-    select.appendChild(option);
+    card.append(tick, name, meta, download, remove);
+    box.appendChild(card);
   }
-  if (previous && lists.some((l) => l.id === previous)) select.value = previous;
-  // With one saved list there's nothing to choose, so don't ask.
-  el("list-row").hidden = lists.length < 2;
 }
 
 function renderRun() {
@@ -681,36 +744,89 @@ function renderRun() {
     warning.hidden = true;
   }
 
-  const progressBox = el("progress");
+  const job = el("job");
   if (!run) {
-    progressBox.hidden = true;
+    job.hidden = true;
     return;
   }
-  progressBox.hidden = false;
+  job.hidden = false;
+
   const counts = Q.progress(run);
   const pct = counts.total ? Math.round((counts.processed / counts.total) * 100) : 0;
   el("progress-fill").style.width = `${pct}%`;
   el("progress-counts").textContent =
     `${counts.processed} of ${counts.total} · ${counts.done} ${run.dryRun ? "would subscribe" : "subscribed"} · ` +
     `${counts.skipped} skipped · ${counts.failed} failed`;
+
+  el("job-title").textContent = finished
+    ? run.dryRun
+      ? "Practice run finished"
+      : "All done"
+    : paused
+      ? "Paused"
+      : run.dryRun
+        ? "Practice run — nothing is being clicked"
+        : "Subscribing…";
+
+  if (!running) setNow("");
 }
 
-function renderLog() {
-  const list = el("log");
+function renderSteps() {
+  el("step-1").classList.toggle("done", lists.length > 0);
+  el("step-2").classList.toggle("done", Boolean(run && run.status === "finished" && !run.dryRun));
+}
+
+// Newest first, so the thing that just happened is always the thing you see.
+function renderFeed() {
+  const list = el("feed");
   list.textContent = "";
-  for (const line of logLines.slice(-MAX_LOG)) {
+  for (const line of logLines.slice(-MAX_LOG).reverse()) {
     const li = document.createElement("li");
     if (line.level) li.className = line.level;
-    const time = document.createElement("span");
-    time.className = "time";
-    time.textContent = line.stamp;
+
+    const dot = document.createElement("span");
+    dot.className = "dot";
+
     const text = document.createElement("span");
     text.className = "text";
     text.textContent = line.text;
-    li.append(time, text);
+
+    const time = document.createElement("span");
+    time.className = "time";
+    time.textContent = line.stamp;
+
+    li.append(dot, text, time);
     list.appendChild(li);
   }
-  list.scrollTop = list.scrollHeight;
+}
+
+// Shows up once there's a job on, which is when someone is sitting there with
+// nothing to do but watch a progress bar.
+function renderSupport() {
+  const panel = el("support");
+  if (!run) {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+
+  const thisRun = Q.progress(run).done * MANUAL_SECONDS_EACH;
+  const allTime = stats.subscribed * MANUAL_SECONDS_EACH;
+  const verb = run.status === "finished" ? "just saved you" : "has saved you";
+
+  let line = `Doing this lot by hand would have taken about ${humanDuration(thisRun)} — SubSwap ${verb} that.`;
+  if (allTime > thisRun) {
+    line += ` Across everything you've done with it, that's about ${humanDuration(allTime)}.`;
+  }
+  el("saved-line").textContent = thisRun > 0 ? line : "";
+
+  const tip = el("tip-link");
+  tip.hidden = !SUPPORT_URL;
+  if (SUPPORT_URL) tip.href = SUPPORT_URL;
+  el("tip-missing").hidden = Boolean(SUPPORT_URL);
+  el("tip-missing").textContent = SUPPORT_URL
+    ? ""
+    : "No tip link set yet — paste one into SUPPORT_URL in manager.js and the button appears.";
 }
 
 // ------------------------------------------------------------ file in/out
@@ -799,11 +915,6 @@ el("run-reset").addEventListener("click", async () => {
   loop();
 });
 
-el("log-clear").addEventListener("click", async () => {
-  logLines = [];
-  await save();
-  renderLog();
-});
 el("log-copy").addEventListener("click", async () => {
   const text = logLines.map((l) => `${l.stamp}  ${l.text}`).join("\n");
   await navigator.clipboard.writeText(text);
@@ -824,4 +935,4 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 connectTimer();
 await load();
 render();
-renderLog();
+renderFeed();
