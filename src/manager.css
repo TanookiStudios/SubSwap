@@ -434,14 +434,41 @@ button.primary {
 }
 
 
-/* Tip jar column. Sticky so it stays put as the feed scrolls past it. */
+/* Tip jar column. Sticky so it stays put as the feed scrolls past it, and a
+   column so the story can scroll inside while the signature stays pinned to the
+   bottom — it's the part people should always be able to see. */
 .support {
   position: sticky;
   top: 16px;
+  display: flex;
+  flex-direction: column;
+  max-height: 520px;
   padding: 16px 18px 18px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--bg);
+}
+
+.support .about {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Fades the last line at the scroll boundary so it reads as "there's more"
+     rather than "this is broken". */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
+}
+
+.about-rules {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.about-rules li {
+  margin: 4px 0;
 }
 
 .support .saved {
@@ -488,6 +515,7 @@ a.tip {
 }
 
 .sign {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 12px;
