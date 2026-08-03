@@ -16,7 +16,7 @@
 //
 // Nothing appears on screen — this is headless.
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -296,37 +296,61 @@ try {
   );
 
   const out = join(outDir, `${only}.png`);
-  try {
-    execFileSync(
-      chrome,
-      [
-        "--headless=new",
-        "--disable-gpu",
-        "--no-first-run",
-        "--no-default-browser-check",
-        "--hide-scrollbars",
-        "--force-color-profile=srgb",
-        // Without this, file:// is an opaque origin and <script type="module">
-        // is refused by CORS — the page renders un-booted markup instead, which
-        // looks close enough to right to fool you.
-        "--allow-file-access-from-files",
-        "--virtual-time-budget=4000",
-        `--screenshot=${out}`,
-        `--window-size=${WIDTH},${HEIGHT}`,
-        `--user-data-dir=${join(work, "profile")}`,
-        `file://${join(stage, pageName)}`,
-      ],
-      // Chrome takes ~3 minutes a shot on a cold profile. The old 3-minute
-      // ceiling landed right on top of that, so a capture that had already
-      // written its PNG still got killed and reported as a failure.
-      { stdio: "pipe", timeout: 600000 },
-    );
-  } catch (err) {
-    const detail = [err.stderr?.toString(), err.stdout?.toString(), err.message].filter(Boolean).join("\n");
-    throw new Error(`Chrome failed:\n${detail}`);
+  rmSync(out, { force: true });
+
+  // Chrome writes the PNG and then, in this setup, doesn't exit — so waiting on
+  // the process meant every capture burned the full timeout even though the
+  // image had been on disk for seconds. Watch for the file instead and stop
+  // Chrome the moment it's finished writing. Fifty minutes became about one.
+  const child = spawn(
+    chrome,
+    [
+      "--headless=new",
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--hide-scrollbars",
+      "--force-color-profile=srgb",
+      // Without this, file:// is an opaque origin and <script type="module">
+      // is refused by CORS — the page renders un-booted markup instead, which
+      // looks close enough to right to fool you.
+      "--allow-file-access-from-files",
+      "--virtual-time-budget=4000",
+      `--screenshot=${out}`,
+      `--window-size=${WIDTH},${HEIGHT}`,
+      `--user-data-dir=${join(work, "profile")}`,
+      `file://${join(stage, pageName)}`,
+    ],
+    { stdio: "ignore" },
+  );
+
+  const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+  const deadline = Date.now() + 180000;
+  let written = 0;
+
+  while (Date.now() < deadline) {
+    await pause(500);
+    let size = 0;
+    try {
+      size = statSync(out).size;
+    } catch {
+      size = 0;
+    }
+    // Two identical non-zero readings means it's done writing, not mid-write.
+    if (size > 0 && size === written) break;
+    written = size;
+    if (child.exitCode !== null && size === 0) break;
   }
 
-  if (statSync(out).size === 0) throw new Error(`${only}.png came out empty`);
+  child.kill("SIGKILL");
+
+  if (written === 0) {
+    throw new Error(
+      `Chrome produced no image within 3 minutes.\n` +
+        `Page: ${join(stage, pageName)}\n` +
+        `If this keeps happening, run that file in a browser by hand and look at the console.`,
+    );
+  }
 } finally {
   rmSync(work, { recursive: true, force: true });
 }
