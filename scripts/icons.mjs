@@ -17,8 +17,8 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SIZES = [128, 48, 32, 16];
 
-const RED = [0xe5, 0x48, 0x4d];
-const WHITE = [0xff, 0xff, 0xff];
+const PINK = [0xf4, 0xa7, 0xc3];
+const INK = [0x57, 0x13, 0x2f];
 
 // Everything below is in the SVG's 128-unit space and scaled per size.
 const UNITS = 128;
@@ -90,15 +90,15 @@ function renderPixels(size) {
 
       const total = SUB * SUB;
       const alpha = background / total;
-      const white = foreground / total;
+      const ink = foreground / total;
       const offset = (y * size + x) * 4;
 
       if (alpha === 0) continue;
 
-      // White over red, then the whole thing over transparency.
-      const mix = white / alpha;
+      // Ink over pink, then the whole thing over transparency.
+      const mix = ink / alpha;
       for (let channel = 0; channel < 3; channel++) {
-        data[offset + channel] = Math.round(RED[channel] * (1 - mix) + WHITE[channel] * mix);
+        data[offset + channel] = Math.round(PINK[channel] * (1 - mix) + INK[channel] * mix);
       }
       data[offset + 3] = Math.round(alpha * 255);
     }

@@ -5,7 +5,12 @@
   --ink: #14161a;
   --muted: #6b7280;
   --line: #e4e6ea;
-  --accent: #cc2b2b;
+  /* Pastel pink needs three values, not one: a fill, an ink dark enough to read
+     on top of that fill, and a deeper rose for accent-coloured text on the page
+     background — pastel on white is unreadable. */
+  --accent: #f4a7c3;
+  --accent-ink: #57132f;
+  --accent-text: #a83a66;
   --ok: #1a7f45;
   --warn: #a15c00;
   --bad: #b32020;
@@ -18,7 +23,9 @@
     --ink: #f2f3f5;
     --muted: #9aa1ab;
     --line: #272b32;
-    --accent: #ff5252;
+    --accent: #f7b9d2;
+    --accent-ink: #3b0e20;
+    --accent-text: #f4a9c6;
     --ok: #4ade80;
     --warn: #fbbf24;
     --bad: #f87171;
@@ -99,7 +106,7 @@ main > .brand {
   height: 32px;
   border-radius: 999px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
   display: grid;
   place-items: center;
   font-weight: 700;
@@ -232,7 +239,7 @@ button:disabled {
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .segmented {
@@ -251,7 +258,7 @@ button.primary {
 
 .segmented button.selected {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
   font-weight: 600;
 }
 
@@ -442,7 +449,7 @@ button.primary {
   font-size: 16px;
   font-weight: 620;
   line-height: 1.45;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .support .saved:empty {
@@ -456,10 +463,6 @@ button.primary {
   color: var(--muted);
 }
 
-.support .about p:first-child {
-  color: var(--ink);
-}
-
 .support .about p:last-child {
   margin-bottom: 0;
 }
@@ -471,7 +474,7 @@ a.tip {
   padding: 10px 16px;
   border-radius: 9px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
   font-weight: 650;
   font-size: 14px;
   text-decoration: none;
@@ -533,6 +536,7 @@ a.tip {
 
 .step.done .step-no {
   background: var(--ok);
+  color: #fff;
 }
 
 /* Mid-job, everything that isn't the job itself comes off the page: the step

@@ -136,14 +136,14 @@ export function ytAction(action, options) {
     style.id = STYLE_ID;
     style.textContent = [
       "@keyframes subswap-pulse {",
-      "  0%   { box-shadow: 0 0 0 0 rgba(255,80,80,.85); }",
-      "  70%  { box-shadow: 0 0 0 12px rgba(255,80,80,0); }",
-      "  100% { box-shadow: 0 0 0 0 rgba(255,80,80,0); }",
+      "  0%   { box-shadow: 0 0 0 0 rgba(244,167,195,.9); }",
+      "  70%  { box-shadow: 0 0 0 12px rgba(244,167,195,0); }",
+      "  100% { box-shadow: 0 0 0 0 rgba(244,167,195,0); }",
       "}",
       "." + RING_CLASS + " {",
       "  animation: subswap-pulse 1.4s ease-out infinite;",
       "  border-radius: 999px !important;",
-      "  outline: 3px solid rgba(255,80,80,.9) !important;",
+      "  outline: 3px solid rgba(244,167,195,.95) !important;",
       "  outline-offset: 3px;",
       "}",
       "#" + OVERLAY_ID + " {",

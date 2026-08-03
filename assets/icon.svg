@@ -3,8 +3,8 @@
        PNG sizes the store and the toolbar need. Kept deliberately blunt: two
        arrows swapping places still reads at 16px, where anything finer turns
        to mush. -->
-  <rect width="128" height="128" rx="28" fill="#E5484D" />
-  <g fill="none" stroke="#ffffff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+  <rect width="128" height="128" rx="28" fill="#F4A7C3" />
+  <g fill="none" stroke="#57132F" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
     <path d="M36 51 H88" />
     <path d="M76 39 L92 51 L76 63" />
     <path d="M92 79 H40" />
