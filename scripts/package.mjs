@@ -22,7 +22,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SHIP = ["manifest.json", "src"];
 
 // Belt and braces: even inside src/, these never ship.
-const EXCLUDE = ["*/.DS_Store", ".DS_Store", "*/assets/signature.svg"];
+const EXCLUDE = ["*/.DS_Store", ".DS_Store"];
 
 console.log("running checks first…");
 execFileSync(process.execPath, [join(root, "scripts/check.mjs")], { cwd: root, stdio: "inherit" });
