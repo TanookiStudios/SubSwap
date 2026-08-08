@@ -7,6 +7,7 @@ import {
   diffChannels,
   displayName,
   isUsable,
+  normaliseAvatar,
   normaliseHandle,
   normaliseTitle,
   parseChannelUrl,
@@ -28,6 +29,24 @@ test("titles squash to a comparable form", () => {
   assert.equal(normaliseTitle("TOM  SCOTT!"), "tomscott");
   assert.equal(normaliseTitle("Beyoncé"), "beyonce");
   assert.equal(normaliseTitle("!!!"), null);
+});
+
+test("avatar URLs are normalised to something any app can load", () => {
+  // Protocol-relative works in a page but resolves to file://yt3.ggpht.com in a
+  // desktop app, which fails silently — so it gets an explicit scheme here.
+  assert.equal(normaliseAvatar("//yt3.ggpht.com/abc=s176"), "https://yt3.ggpht.com/abc=s176");
+  assert.equal(normaliseAvatar("https://yt3.ggpht.com/abc=s176"), "https://yt3.ggpht.com/abc=s176");
+  assert.equal(normaliseAvatar("  //yt3.ggpht.com/abc  "), "https://yt3.ggpht.com/abc");
+  // Placeholders and blanks are "no avatar", not a broken image.
+  assert.equal(normaliseAvatar(""), null);
+  assert.equal(normaliseAvatar("   "), null);
+  assert.equal(normaliseAvatar(null), null);
+  assert.equal(normaliseAvatar("data:image/gif;base64,R0lGOD"), null);
+});
+
+test("toChannel normalises the avatar it was handed", () => {
+  const channel = toChannel({ channelId: ID_A, title: "Tom Scott", avatar: "//yt3.ggpht.com/a=s88" });
+  assert.equal(channel.avatar, "https://yt3.ggpht.com/a=s88");
 });
 
 test("channel URLs parse in every shape YouTube uses", () => {

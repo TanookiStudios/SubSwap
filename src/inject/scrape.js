@@ -7,9 +7,11 @@
 
 export async function scrapeSubscriptions(options) {
   const opts = options || {};
-  const settleTicks = opts.settleTicks || 3;
-  const tickMs = opts.tickMs || 700;
-  const timeoutMs = opts.timeoutMs || 90000;
+  // ?? rather than || so a caller can legitimately pass 0 (the tests do, to
+  // avoid sitting through the real scroll delay).
+  const settleTicks = opts.settleTicks ?? 3;
+  const tickMs = opts.tickMs ?? 700;
+  const timeoutMs = opts.timeoutMs ?? 90000;
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const ITEM_SELECTOR = "ytd-channel-renderer, ytd-grid-channel-renderer";
@@ -35,7 +37,10 @@ export async function scrapeSubscriptions(options) {
       last = n;
     }
   }
-  window.scrollTo(0, 0);
+
+  // NOTE: do not scroll back to the top until after the capture loop below.
+  // Reading avatars out of the DOM only works for rows that are on screen, so
+  // jumping to the top first threw away almost every picture.
 
   const readText = (node) => {
     if (!node) return null;
@@ -46,6 +51,43 @@ export async function scrapeSubscriptions(options) {
       return joined || null;
     }
     return null;
+  };
+
+  // YouTube serves plenty of image URLs protocol-relative ("//yt3.ggpht.com/…").
+  // That's fine in a page, but consumers of the export are usually not on https
+  // — in a desktop app it resolves to file://yt3.ggpht.com and fails silently.
+  const absoluteUrl = (url) => {
+    if (typeof url !== "string") return null;
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith("//")) return `https:${trimmed}`;
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return null;
+  };
+
+  // Prefer YouTube's own data over the rendered <img>.
+  //
+  // The avatar images are lazy-loaded, so an <img> for a row that never entered
+  // the viewport has no usable src — which is why exports used to come back
+  // with the title and handle present but the picture missing on most rows.
+  // The Polymer data object carries every thumbnail regardless of what has been
+  // painted, so read that first and treat the DOM as the fallback.
+  const readAvatar = (data, el) => {
+    const buckets = [data && data.thumbnail, data && data.avatar];
+    for (const bucket of buckets) {
+      const thumbnails = bucket && bucket.thumbnails;
+      if (!Array.isArray(thumbnails) || thumbnails.length === 0) continue;
+      // Biggest available — callers can always ask YouTube for a smaller crop.
+      const best = thumbnails.reduce((a, b) => ((b.width || 0) > (a.width || 0) ? b : a));
+      const url = absoluteUrl(best && best.url);
+      if (url) return url;
+    }
+
+    const img = el.querySelector("img");
+    if (!img) return null;
+    // Lazy-loading frameworks stash the real URL in a data attribute and leave
+    // src as a placeholder, so check both.
+    return absoluteUrl(img.getAttribute("src")) || absoluteUrl(img.getAttribute("data-src"));
   };
 
   const results = [];
@@ -74,16 +116,17 @@ export async function scrapeSubscriptions(options) {
       const titleEl = el.querySelector("#channel-title, #text, yt-formatted-string#text");
       title = titleEl ? titleEl.textContent.trim() : null;
     }
-    const img = el.querySelector("img");
-
     if (!channelId && !href) continue;
     results.push({
       channelId,
       title,
       url: href,
-      avatar: img ? img.getAttribute("src") : null,
+      avatar: readAvatar(data, el),
     });
   }
+
+  // Capture is done, so it's safe to put the page back where we found it.
+  window.scrollTo(0, 0);
 
   // Belt and braces: if the renderer names have changed under us, fall back to
   // scanning channel links inside the page body. Better a rough list than none.

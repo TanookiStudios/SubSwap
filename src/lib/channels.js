@@ -27,6 +27,20 @@ export function normaliseTitle(title) {
   return squashed.length > 0 ? squashed : null;
 }
 
+// Avatar URLs come off YouTube protocol-relative as often as not
+// ("//yt3.ggpht.com/…"). That works inside a page but breaks anywhere the
+// export is opened from something other than https — in a desktop app it
+// resolves to file://yt3.ggpht.com and quietly shows nothing. Normalise once,
+// here, so every consumer gets a URL it can actually load.
+export function normaliseAvatar(url) {
+  if (!url) return null;
+  const trimmed = String(url).trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return null;
+}
+
 // Accepts a full URL or a YouTube-relative path.
 export function parseChannelUrl(url) {
   if (!url) return { channelId: null, handle: null };
@@ -63,7 +77,7 @@ export function toChannel(raw) {
     channelId,
     handle,
     title,
-    avatar: raw.avatar || null,
+    avatar: normaliseAvatar(raw.avatar),
     url: channelUrl({ channelId, handle }),
   };
 }
