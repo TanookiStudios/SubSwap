@@ -3,11 +3,15 @@
 //
 //   node scripts/icons.mjs
 //
-// Rendering the SVG through headless Chrome was the obvious approach and it
-// hung on this machine, so the shapes are rasterised here instead. The artwork
-// is two rounded bars with chevrons on a rounded square — all of it expressible
-// as "distance to a line segment", which is a dozen lines of maths and cannot
-// fail halfway. assets/icon.svg is kept in step as the human-readable source.
+// Rendering assets/icon.svg through headless Chrome was the obvious approach
+// and it hung on this machine, so the shapes are rasterised here instead —
+// everything in the mark is "distance to a line segment", which is a dozen
+// lines of maths and cannot fail halfway. assets/icon.svg is the readable copy
+// of the same geometry; change one, change the other.
+//
+// The mark: a list of channels lifting off one account and landing on another.
+// Solid bars are what you have, outlined bars are where they're going, and the
+// arrow carries them across.
 
 import { deflateSync } from "node:zlib";
 import { mkdirSync, statSync, writeFileSync } from "node:fs";
@@ -17,35 +21,117 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SIZES = [128, 48, 32, 16];
 
-const PINK = [0xf4, 0xa7, 0xc3];
-const INK = [0x57, 0x13, 0x2f];
+const BG = [0x10, 0x10, 0x14];
+const INK = [0xff, 0xff, 0xff];
 
 // Everything below is in the SVG's 128-unit space and scaled per size.
 const UNITS = 128;
 const CORNER = 28;
-const STROKE = 11;
-const SEGMENTS = [
-  // top arrow: bar, then the two halves of the chevron
-  [36, 51, 88, 51],
-  [76, 39, 92, 51],
-  [92, 51, 76, 63],
-  // bottom arrow, pointing the other way
-  [92, 79, 40, 79],
-  [52, 67, 36, 79],
-  [36, 79, 52, 91],
-];
 
-// Distance from a point to a line segment — a stroked line is every point
-// within half the stroke width of it, which gives round caps for free.
-function distanceToSegment(px, py, [x1, y1, x2, y2]) {
+// Two geometries, because a shrunk icon is not a small icon. The full mark has
+// three rows a side; at 16px those six bars plus an arrow turn into a grey
+// smudge, so the small mark drops to two rows, thickens everything, and widens
+// the gap between the columns. Same idea, fewer things to resolve.
+const FULL = {
+  barR: 5.5,
+  rows: [64, 82, 100],
+  left: [27.5, 50.5],
+  right: [77.5, 100.5],
+  outlineT: 4.6,
+  arrowR: 5,
+  curve: [[28, 48], [64, 20], [100, 48]],
+  outlined: true,
+};
+
+const SMALL = {
+  barR: 8.5,
+  rows: [74, 100],
+  left: [30, 50],
+  right: [82, 102],
+  outlineT: 7,
+  arrowR: 7.5,
+  curve: [[30, 46], [64, 22], [98, 46]],
+  // An outline is under a pixel down here. The destination bars go solid but
+  // dimmer instead — still reads as "not filled in yet", still visible.
+  outlined: false,
+};
+
+// Below this the small mark is used.
+const SMALL_MAX_SIZE = 32;
+const DIM = 0.58;
+
+// Stop the curve short of the head so the two don't bulge where they meet.
+const ARROW_CURVE_END = 0.86;
+
+function distanceToSegment(px, py, x1, y1, x2, y2) {
   const dx = x2 - x1;
   const dy = y2 - y1;
   const lengthSquared = dx * dx + dy * dy;
   let t = lengthSquared === 0 ? 0 : ((px - x1) * dx + (py - y1) * dy) / lengthSquared;
   t = Math.max(0, Math.min(1, t));
-  const cx = x1 + t * dx;
-  const cy = y1 + t * dy;
-  return Math.hypot(px - cx, py - cy);
+  return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+}
+
+function distanceToPolyline(px, py, points) {
+  let best = Infinity;
+  for (let i = 0; i < points.length - 1; i++) {
+    const d = distanceToSegment(px, py, points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]);
+    if (d < best) best = d;
+  }
+  return best;
+}
+
+// Flatten the curve and derive the head from its own end tangent, so a variant
+// only has to state its curve and thickness and the arrow stays consistent.
+function buildArrow(variant) {
+  const [p0, p1, p2] = variant.curve;
+  const points = [];
+  const STEPS = 28;
+  for (let i = 0; i <= STEPS; i++) {
+    const t = (i / STEPS) * ARROW_CURVE_END;
+    const u = 1 - t;
+    points.push([
+      u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0],
+      u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1],
+    ]);
+  }
+
+  const tx = 2 * (p2[0] - p1[0]);
+  const ty = 2 * (p2[1] - p1[1]);
+  const len = Math.hypot(tx, ty);
+  const ux = tx / len;
+  const uy = ty / len;
+
+  const tip = [p2[0] + ux * variant.arrowR * 0.9, p2[1] + uy * variant.arrowR * 0.9];
+  const headLen = variant.arrowR * 3.6;
+  const halfWidth = variant.arrowR * 2.3;
+  const back = [tip[0] - ux * headLen, tip[1] - uy * headLen];
+  const head = [
+    [back[0] - uy * halfWidth, back[1] + ux * halfWidth],
+    [back[0] + uy * halfWidth, back[1] - ux * halfWidth],
+    tip,
+  ];
+
+  return { points, head };
+}
+
+const ARROWS = new Map([
+  [FULL, buildArrow(FULL)],
+  [SMALL, buildArrow(SMALL)],
+]);
+
+// Standard half-plane test: inside if it's on the same side of all three edges.
+function insideTriangle(px, py, tri) {
+  let positive = false;
+  let negative = false;
+  for (let i = 0; i < 3; i++) {
+    const [ax, ay] = tri[i];
+    const [bx, by] = tri[(i + 1) % 3];
+    const cross = (bx - ax) * (py - ay) - (by - ay) * (px - ax);
+    if (cross > 0) positive = true;
+    if (cross < 0) negative = true;
+  }
+  return !(positive && negative);
 }
 
 function insideRoundedSquare(px, py) {
@@ -57,11 +143,24 @@ function insideRoundedSquare(px, py) {
   return Math.hypot(px - cx, py - cy) <= CORNER;
 }
 
-function insideArrows(px, py) {
-  for (const segment of SEGMENTS) {
-    if (distanceToSegment(px, py, segment) <= STROKE / 2) return true;
+// How much ink is at this point: 1 = solid, DIM = the dimmed destination bars,
+// 0 = background.
+function inkAt(px, py, v) {
+  const arrow = ARROWS.get(v);
+  if (distanceToPolyline(px, py, arrow.points) <= v.arrowR) return 1;
+  if (insideTriangle(px, py, arrow.head)) return 1;
+
+  for (const cy of v.rows) {
+    if (distanceToSegment(px, py, v.left[0], cy, v.left[1], cy) <= v.barR) return 1;
+
+    const d = distanceToSegment(px, py, v.right[0], cy, v.right[1], cy);
+    if (v.outlined) {
+      if (Math.abs(d - v.barR) <= v.outlineT / 2) return 1;
+    } else if (d <= v.barR) {
+      return DIM;
+    }
   }
-  return false;
+  return 0;
 }
 
 // 4x4 supersampling. Cheap at these sizes and it's what stops 16px looking
@@ -70,35 +169,31 @@ const SUB = 4;
 
 function renderPixels(size) {
   const scale = UNITS / size;
+  const v = size <= SMALL_MAX_SIZE ? SMALL : FULL;
   const data = Buffer.alloc(size * size * 4);
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      let background = 0;
-      let foreground = 0;
+      let covered = 0;
+      let ink = 0;
 
       for (let sy = 0; sy < SUB; sy++) {
         for (let sx = 0; sx < SUB; sx++) {
           const px = (x + (sx + 0.5) / SUB) * scale;
           const py = (y + (sy + 0.5) / SUB) * scale;
-          if (insideRoundedSquare(px, py)) {
-            background += 1;
-            if (insideArrows(px, py)) foreground += 1;
-          }
+          if (!insideRoundedSquare(px, py)) continue;
+          covered += 1;
+          ink += inkAt(px, py, v);
         }
       }
 
-      const total = SUB * SUB;
-      const alpha = background / total;
-      const ink = foreground / total;
+      if (covered === 0) continue;
+
+      const alpha = covered / (SUB * SUB);
+      const mix = ink / covered;
       const offset = (y * size + x) * 4;
-
-      if (alpha === 0) continue;
-
-      // Ink over pink, then the whole thing over transparency.
-      const mix = ink / alpha;
       for (let channel = 0; channel < 3; channel++) {
-        data[offset + channel] = Math.round(PINK[channel] * (1 - mix) + INK[channel] * mix);
+        data[offset + channel] = Math.round(BG[channel] * (1 - mix) + INK[channel] * mix);
       }
       data[offset + 3] = Math.round(alpha * 255);
     }
@@ -165,10 +260,15 @@ mkdirSync(outDir, { recursive: true });
 for (const size of SIZES) {
   const out = join(outDir, `icon-${size}.png`);
   writeFileSync(out, encodePng(size, renderPixels(size)));
-
-  // Read it back and confirm the header says what we think it does.
-  const check = statSync(out);
-  console.log(`icon-${size}.png  ${check.size} bytes`);
+  const shape = size <= SMALL_MAX_SIZE ? "small mark" : "full mark";
+  console.log(`icon-${size}.png  ${statSync(out).size} bytes  (${shape} destination bars)`);
 }
 
-console.log(`\nwrote ${SIZES.length} icons to src/icons/`);
+// The store wants a 1024 master for the listing tile; same geometry, no
+// small-size compromises.
+const master = join(root, "store/icon-1024.png");
+mkdirSync(dirname(master), { recursive: true });
+writeFileSync(master, encodePng(1024, renderPixels(1024)));
+console.log(`icon-1024.png ${statSync(master).size} bytes  (store master)`);
+
+console.log(`\nwrote ${SIZES.length} icons to src/icons/ + a 1024 master to store/`);

@@ -1,13 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <!-- Source of truth for the icon set. scripts/icons.mjs renders this to the
-       PNG sizes the store and the toolbar need. Kept deliberately blunt: two
-       arrows swapping places still reads at 16px, where anything finer turns
-       to mush. -->
-  <rect width="128" height="128" rx="28" fill="#F4A7C3" />
-  <g fill="none" stroke="#57132F" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M36 51 H88" />
-    <path d="M76 39 L92 51 L76 63" />
-    <path d="M92 79 H40" />
-    <path d="M52 67 L36 79 L52 91" />
+       PNG sizes the store and the toolbar need — it rasterises the same shapes
+       procedurally rather than reading this file, so if you change one, change
+       both. This is the readable copy.
+
+       The mark: a list of channels lifting off one account and landing on
+       another. Solid bars are what you have, outlined bars are where they're
+       going, and the arrow carries them across. -->
+  <rect width="128" height="128" rx="28" fill="#101014" />
+
+  <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
+    <!-- the arrow, carrying the list left to right -->
+    <g stroke-width="10">
+      <path d="M28 48 Q58.96 23.92 89.92 41.26" />
+    </g>
+    <polygon points="82.28 48.79, 96.40 30.63, 103.55 50.76" fill="#FFFFFF" stroke="none" />
+
+    <!-- destination: outlined bars, not filled in yet -->
+    <g stroke-width="4.6">
+      <rect x="72" y="58.5" width="34" height="11" rx="5.5" />
+      <rect x="72" y="76.5" width="34" height="11" rx="5.5" />
+      <rect x="72" y="94.5" width="34" height="11" rx="5.5" />
+    </g>
+  </g>
+
+  <!-- source: the list you already have -->
+  <g fill="#FFFFFF">
+    <rect x="22" y="58.5" width="34" height="11" rx="5.5" />
+    <rect x="22" y="76.5" width="34" height="11" rx="5.5" />
+    <rect x="22" y="94.5" width="34" height="11" rx="5.5" />
   </g>
 </svg>
