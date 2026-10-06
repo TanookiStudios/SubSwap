@@ -12,6 +12,10 @@ Two steps:
 Works in Chrome, Brave, Edge, Vivaldi, Opera — anything Chromium. No account, no
 server, no API key. Nothing leaves your browser.
 
+**Open source, MIT licensed.** Every line of it is in this repository — including
+the part that reads your subscriptions — so you don't have to take my word for
+what it does with them. Read it, fork it, run your own copy.
+
 ## Installing
 
 There's no build step. Clone it and load the folder:
