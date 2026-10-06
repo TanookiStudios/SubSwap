@@ -332,6 +332,9 @@ async function doExport() {
     showStep1 = false;
     log(`Saved ${channels.length} channels as “${label}”.`, "ok");
     render();
+    // The ask is unfolded and waiting, but it doesn't get the scroll: the list
+    // is saved and the next thing they need is step 2, not a tip jar.
+    openFold("fold-support");
     el("step-2").scrollIntoView({ behavior: "smooth", block: "center" });
   } catch (err) {
     el("export-status").textContent = err.message;
@@ -561,6 +564,11 @@ async function loop() {
     );
     setNow("");
     await closeWorkerWindow();
+
+    // Done, and the panel above has just put a number on what that saved them.
+    // A practice run gets the section opened but not the scroll — nothing has
+    // actually happened yet, and asking for money for it would be a bit rich.
+    openFold("fold-support", { scroll: !run.dryRun });
   }
   await save();
   render();
@@ -800,8 +808,8 @@ function renderSteps() {
     const controls = el("run-start").parentElement;
     if (brand.parentElement !== controls) controls.prepend(brand);
   } else {
-    const view = el("view-swap");
-    if (brand.parentElement !== view) view.prepend(brand);
+    const main = document.querySelector("main");
+    if (brand.parentElement !== main) main.prepend(brand);
   }
 
   el("step-1").classList.toggle("done", lists.length > 0);
@@ -872,6 +880,16 @@ function renderSupport() {
     line += ` Across everything you've done with it, that's about ${humanDuration(allTime)}.`;
   }
   el("saved-line").textContent = thisRun > 0 ? line : "";
+}
+
+// Unfold one of the sections at the bottom of the page. `scroll` is off when
+// something else has already decided where to put the person — after an export
+// that's step 2, which is what they actually need next.
+function openFold(id, { scroll = false } = {}) {
+  const fold = el(id);
+  if (!fold || fold.open) return;
+  fold.open = true;
+  if (scroll) fold.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // ------------------------------------------------------------ file in/out
@@ -996,20 +1014,10 @@ for (const slot of document.querySelectorAll("[data-mount]")) {
 // getManifest isn't there under the screenshot harness's stub, hence the guard.
 el("version").textContent = `v${chrome.runtime.getManifest?.().version ?? "?"}`;
 
-function showView(name) {
-  for (const tab of document.querySelectorAll("#tabs button")) {
-    tab.setAttribute("aria-selected", String(tab.getAttribute("aria-controls") === `view-${name}`));
-  }
-  for (const view of document.querySelectorAll(".view")) {
-    view.hidden = view.id !== `view-${name}`;
-  }
-}
-
-// Delegated, so the tabs themselves and the "more about why I make these" link
-// inside the job column go through the same path.
+// Delegated, so anything carrying data-open unfolds the section it names.
 document.addEventListener("click", (event) => {
-  const jump = event.target.closest("[data-view]");
-  if (jump) showView(jump.dataset.view);
+  const jump = event.target.closest("[data-open]");
+  if (jump) openFold(jump.dataset.open, { scroll: true });
 });
 
 connectTimer();

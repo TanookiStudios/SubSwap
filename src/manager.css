@@ -615,43 +615,12 @@ button.primary {
   color: var(--ink);
 }
 
-/* ------------------------------------------------------------------- tabs */
-
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0 2px;
-}
-
-.tabs button {
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--muted);
-  padding: 7px 14px;
-  border-radius: 999px;
-  font: inherit;
-  font-size: 13.5px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.tabs button:hover {
-  color: var(--ink);
-}
-
-.tabs button[aria-selected="true"] {
-  background: var(--accent);
-  border-color: transparent;
-  color: var(--accent-ink);
-}
-
-/* main holds the tab bar and the three views; each view lays its own cards out
-   the way main used to. */
-.view {
-  display: grid;
-  gap: 16px;
-  align-content: start;
+/* The About and Support My Work sections fold open like Settings does. Their
+   summaries are the real headings of the page, so they sit a touch heavier than
+   the Settings one, which is deliberately quiet. */
+#fold-about > summary,
+#fold-support > summary {
+  font-size: 16px;
 }
 
 /* A mount slot must not become a box of its own — the signature pins itself to
@@ -784,11 +753,10 @@ button.primary {
   font-size: 13.5px;
 }
 
-/* Pushed to the far end of the tab row — present, findable, ignorable. */
+/* Tucked on the end of the tagline — present, findable, ignorable. */
 .version {
-  margin-left: auto;
-  align-self: center;
-  color: var(--muted);
+  margin-left: 4px;
+  opacity: 0.7;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }

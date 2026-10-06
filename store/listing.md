@@ -157,7 +157,7 @@ Then certify:
   functionality — **true**
 - Not being used or transferred to determine creditworthiness or for lending — **true**
 
-**About the tip jar.** The Support My Work tab has a donation form that posts to
+**About the tip jar.** The Support My Work section has a donation form that posts to
 tanookistudios.com and hands off to Stripe Checkout in a new tab. It carries the
 amount and nothing else — no channels, no identifiers, nothing about the user —
 so it changes none of the answers above. Worth knowing when you fill the form in:
@@ -165,6 +165,8 @@ so it changes none of the answers above. Worth knowing when you fill the form in
 - It is a *donation*, not a purchase, and nothing in the extension is locked
   behind it. That's what keeps it clear of the Chrome Web Store payments policy,
   which covers digital goods and services consumed inside an extension.
+- It opens no tabs by itself. The section unfolds in place when a job finishes;
+  the only navigation is the one the user starts by pressing Chip In.
 - It loads no third-party script. The form is plain HTML in the extension and
   the payment page is a normal tab on Stripe's own site.
 - The hosted privacy policy describes all of this under "The Tip Jar".

@@ -7,223 +7,202 @@
   </head>
   <body>
     <main>
-      <!-- Three views, one page. The swap is the app; About and Support My Work
-           are Maddie's, and they're reachable at any point rather than only
-           while a job happens to be running. -->
-      <nav class="tabs" id="tabs" role="tablist">
-        <button type="button" role="tab" id="tab-swap" data-view="swap" aria-controls="view-swap" aria-selected="true">
-          Swap
-        </button>
-        <button type="button" role="tab" id="tab-about" data-view="about" aria-controls="view-about" aria-selected="false">
-          About
-        </button>
-        <button type="button" role="tab" id="tab-support" data-view="support" aria-controls="view-support" aria-selected="false">
-          Support My Work
-        </button>
-        <!-- Two copies of an unpacked extension look identical in the toolbar,
-             and clicking the stale one looks exactly like a build that didn't
-             work. Printing the version is the cheapest way to tell them apart. -->
-        <span class="version" id="version"></span>
-      </nav>
-
-      <section class="view" id="view-swap" role="tabpanel" aria-labelledby="tab-swap">
-        <!-- Step 1 ------------------------------------------------------- -->
-        <section class="card step" id="step-1">
-          <div class="step-no">1</div>
-          <div class="step-body">
-            <h2>Save the subscriptions from your old account</h2>
-            <p class="help">
-              Sign into the <strong>old</strong> account in this browser, then press the button.
-              Nothing is changed — it only reads.
-            </p>
-            <button id="export-run" class="big primary">Save my subscriptions</button>
-            <p class="status" id="export-status"></p>
-          </div>
-        </section>
-
-        <!-- Step 2 ------------------------------------------------------- -->
-        <section class="card step" id="step-2">
-          <div class="step-no">2</div>
-          <div class="step-body">
-            <h2>Subscribe on your new account</h2>
-            <p class="help">
-              Sign out, sign into the <strong>new</strong> account, then pick a list and press go.
-              Anything you already follow is skipped.
-            </p>
-
-            <div id="lists" class="lists"></div>
-            <button id="show-step-1" class="linky" type="button" hidden>
-              Save another account's subscriptions
-            </button>
-
-            <div class="controls">
-              <!-- The brand rides in this row while step 1 is folded away, so the
-                   title and the buttons share one line instead of costing two
-                   blocks. renderSteps moves it up to step 1 when that's on show. -->
-              <div class="brand" id="brand">
-                <h1>SubSwap</h1>
-                <p>Move your subscriptions to a new YouTube account.</p>
-              </div>
-              <button id="run-start" class="big primary">Subscribe to them all</button>
-              <button id="run-pause" disabled>Pause</button>
-              <button id="run-stop" disabled>Stop</button>
-              <button id="run-retry" hidden>Try the failed ones again</button>
-              <button id="run-reset" hidden>That looked right — do it for real</button>
-            </div>
-
-            <label class="practice" id="practice-row"
-              ><input type="checkbox" id="dry-run" checked /> Practice run first — go through the whole
-              list without actually subscribing, so you can see it's right</label
-            >
-
-            <!-- The job lives inside step 2 rather than in a card of its own —
-                 it's the same job, and a second card wasted a screenful. -->
-            <div class="job" id="job" hidden>
-              <div class="job-head">
-                <h3 id="job-title">Working…</h3>
-                <span class="job-counts" id="progress-counts"></span>
-              </div>
-              <div class="bar"><div class="fill" id="progress-fill"></div></div>
-              <p class="now" id="now-line"></p>
-              <p class="warn" id="run-warning" hidden></p>
-
-              <div class="job-cols">
-                <ol id="feed"></ol>
-
-                <aside class="support" id="support">
-                  <p class="saved" id="saved-line"></p>
-
-                  <!-- The ask sits here because this column is on screen precisely
-                       when there's nothing to do but watch the log, and the line
-                       above it has just said what the run saved you. The story
-                       behind it lives on the About tab. -->
-                  <div data-mount="tipjar"></div>
-
-                  <button type="button" class="linky about-jump" data-view="about">
-                    More about why I make these
-                  </button>
-
-                  <div data-mount="sign"></div>
-                </aside>
-              </div>
-
-              <p class="help keepopen">
-                Leave this tab open while it's working. If you close it, nothing is lost — come back
-                and press Resume.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <!-- Settings ----------------------------------------------------- -->
-        <details class="card">
-          <summary>Settings <span class="muted">(you shouldn't need these)</span></summary>
-
-          <div class="row">
-            <label>Who clicks Subscribe</label>
-            <div class="segmented" id="mode">
-              <button data-mode="auto" class="selected">SubSwap does</button>
-              <button data-mode="assist">I will</button>
-            </div>
-          </div>
-
-          <div class="row checks">
-            <label
-              ><input type="checkbox" id="scan-first" checked /> Check the new account first so nothing
-              gets done twice</label
-            >
-          </div>
-
-          <div class="row checks">
-            <label
-              ><input type="checkbox" id="hide-window" checked /> Keep the YouTube window out of the
-              way while it subscribes (it still has to be on screen for the few seconds it spends
-              reading your list)</label
-            >
-          </div>
-
-          <div class="row pacing">
-            <label>Wait between each one</label>
-            <input id="min-delay" type="number" min="0" step="1" value="5" /> to
-            <input id="max-delay" type="number" min="0" step="1" value="10" /> seconds, then a
-            <input id="batch-pause" type="number" min="0" step="5" value="60" /> second break every
-            <input id="batch-size" type="number" min="0" step="1" value="20" />
-          </div>
-
-          <div class="row">
-            <label for="export-label">Name for the next saved list</label>
-            <input id="export-label" type="text" placeholder="My subscriptions" />
-          </div>
-
-          <div class="row">
-            <button id="import-file">Load a file instead&hellip;</button>
-            <input id="file-input" type="file" accept=".json,.csv,text/csv,application/json" hidden />
-            <button id="log-copy">Copy the log</button>
-          </div>
-        </details>
+      <!-- Step 1 ------------------------------------------------------- -->
+      <section class="card step" id="step-1">
+        <div class="step-no">1</div>
+        <div class="step-body">
+          <h2>Save the subscriptions from your old account</h2>
+          <p class="help">
+            Sign into the <strong>old</strong> account in this browser, then press the button.
+            Nothing is changed — it only reads.
+          </p>
+          <button id="export-run" class="big primary">Save my subscriptions</button>
+          <p class="status" id="export-status"></p>
+        </div>
       </section>
 
-      <section class="view" id="view-about" role="tabpanel" aria-labelledby="tab-about" hidden>
-        <article class="card">
-          <h2>About</h2>
+      <!-- Step 2 ------------------------------------------------------- -->
+      <section class="card step" id="step-2">
+        <div class="step-no">2</div>
+        <div class="step-body">
+          <h2>Subscribe on your new account</h2>
+          <p class="help">
+            Sign out, sign into the <strong>new</strong> account, then pick a list and press go.
+            Anything you already follow is skipped.
+          </p>
 
+          <div id="lists" class="lists"></div>
+          <button id="show-step-1" class="linky" type="button" hidden>
+            Save another account's subscriptions
+          </button>
+
+          <div class="controls">
+            <!-- The brand rides in this row while step 1 is folded away, so the
+                 title and the buttons share one line instead of costing two
+                 blocks. renderSteps moves it up to step 1 when that's on show. -->
+            <div class="brand" id="brand">
+              <h1>SubSwap</h1>
+              <p>
+                Move your subscriptions to a new YouTube account.
+                <!-- Two copies of an unpacked extension look identical in the
+                     toolbar, and clicking the stale one is indistinguishable
+                     from a build that didn't work. -->
+                <span class="version" id="version"></span>
+              </p>
+            </div>
+            <button id="run-start" class="big primary">Subscribe to them all</button>
+            <button id="run-pause" disabled>Pause</button>
+            <button id="run-stop" disabled>Stop</button>
+            <button id="run-retry" hidden>Try the failed ones again</button>
+            <button id="run-reset" hidden>That looked right — do it for real</button>
+          </div>
+
+          <label class="practice" id="practice-row"
+            ><input type="checkbox" id="dry-run" checked /> Practice run first — go through the whole
+            list without actually subscribing, so you can see it's right</label
+          >
+
+          <!-- The job lives inside step 2 rather than in a card of its own —
+               it's the same job, and a second card wasted a screenful. -->
+          <div class="job" id="job" hidden>
+            <div class="job-head">
+              <h3 id="job-title">Working…</h3>
+              <span class="job-counts" id="progress-counts"></span>
+            </div>
+            <div class="bar"><div class="fill" id="progress-fill"></div></div>
+            <p class="now" id="now-line"></p>
+            <p class="warn" id="run-warning" hidden></p>
+
+            <div class="job-cols">
+              <ol id="feed"></ol>
+
+              <aside class="support" id="support">
+                <p class="saved" id="saved-line"></p>
+
+                <!-- The ask sits here because this column is on screen precisely
+                     when there's nothing to do but watch the log, and the line
+                     above it has just said what the run saved you. The story
+                     behind it lives on the About tab. -->
+                <div data-mount="tipjar"></div>
+
+                <button type="button" class="linky about-jump" data-open="fold-about">
+                  More about why I make these
+                </button>
+
+                <div data-mount="sign"></div>
+              </aside>
+            </div>
+
+            <p class="help keepopen">
+              Leave this tab open while it's working. If you close it, nothing is lost — come back
+              and press Resume.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings ----------------------------------------------------- -->
+      <details class="card">
+        <summary>Settings <span class="muted">(you shouldn't need these)</span></summary>
+
+        <div class="row">
+          <label>Who clicks Subscribe</label>
+          <div class="segmented" id="mode">
+            <button data-mode="auto" class="selected">SubSwap does</button>
+            <button data-mode="assist">I will</button>
+          </div>
+        </div>
+
+        <div class="row checks">
+          <label
+            ><input type="checkbox" id="scan-first" checked /> Check the new account first so nothing
+            gets done twice</label
+          >
+        </div>
+
+        <div class="row checks">
+          <label
+            ><input type="checkbox" id="hide-window" checked /> Keep the YouTube window out of the
+            way while it subscribes (it still has to be on screen for the few seconds it spends
+            reading your list)</label
+          >
+        </div>
+
+        <div class="row pacing">
+          <label>Wait between each one</label>
+          <input id="min-delay" type="number" min="0" step="1" value="5" /> to
+          <input id="max-delay" type="number" min="0" step="1" value="10" /> seconds, then a
+          <input id="batch-pause" type="number" min="0" step="5" value="60" /> second break every
+          <input id="batch-size" type="number" min="0" step="1" value="20" />
+        </div>
+
+        <div class="row">
+          <label for="export-label">Name for the next saved list</label>
+          <input id="export-label" type="text" placeholder="My subscriptions" />
+        </div>
+
+        <div class="row">
+          <button id="import-file">Load a file instead&hellip;</button>
+          <input id="file-input" type="file" accept=".json,.csv,text/csv,application/json" hidden />
+          <button id="log-copy">Copy the log</button>
+        </div>
+      </details>
+
+      <details class="card" id="fold-about">
+        <summary>About</summary>
+        <div class="about">
+          <p>
+            I built this because I was moving to a new YouTube account and realized the
+            alternative was clicking Subscribe about five hundred times. I got roughly forty in
+            before deciding there's gotta be a better way. I present to you, my better way.
+          </p>
+          <p>
+            I'm Maddie, I'm autistic, and I often make small tools that fix one specific
+            irritation properly — the sort of thing that's too small for a company to bother with
+            and too annoying to keep putting up with.
+          </p>
+          <p>I also develop apps for PC, Mac, mobiles, and tablets. I generally develop apps that:</p>
+          <ol class="about-rules">
+            <li>Help me with a problem that I have.</li>
+            <li>Will help others.</li>
+            <li>Bring a little bit of good to the world.</li>
+          </ol>
+          <p>
+            This is also my income. Due to my autism, I don't do well with most typical office
+            jobs. In fact, I tend to really struggle. So with the support of my wife, I decided to
+            invest in myself, and create my own apps full-time.
+          </p>
+        </div>
+
+        <div data-mount="sign"></div>
+      </details>
+
+      <details class="card" id="fold-support">
+        <summary>Support My Work</summary>
+        <div class="support-cols">
           <div class="about">
+            <p class="saved" id="saved-all"></p>
             <p>
-              I built this because I was moving to a new YouTube account and realized the
-              alternative was clicking Subscribe about five hundred times. I got roughly forty in
-              before deciding there's gotta be a better way. I present to you, my better way.
+              SubSwap is free and it stays free. There's no paid tier, no ads and no tracking, and
+              nothing is held back until you pay — what you've got is all of it. It's open source
+              under the MIT license, so you don't have to take my word for any of that.
             </p>
             <p>
-              I'm Maddie, I'm autistic, and I often make small tools that fix one specific
-              irritation properly — the sort of thing that's too small for a company to bother with
-              and too annoying to keep putting up with.
+              Tips are the whole business model. There's nothing here to buy and nothing to
+              upgrade to, so if these tools are worth something to you, this is the only way to
+              say so.
             </p>
-            <p>I also develop apps for PC, Mac, mobiles, and tablets. I generally develop apps that:</p>
-            <ol class="about-rules">
-              <li>Help me with a problem that I have.</li>
-              <li>Will help others.</li>
-              <li>Bring a little bit of good to the world.</li>
-            </ol>
-            <p>
-              This is also my income. Due to my autism, I don't do well with most typical office
-              jobs. In fact, I tend to really struggle. So with the support of my wife, I decided to
-              invest in myself, and create my own apps full-time.
-            </p>
+            <a id="tip-link" class="linky" target="_blank" rel="noopener" hidden
+              >Or open the tip jar on my website</a
+            >
+            <p class="tip-missing" id="tip-missing" hidden></p>
           </div>
 
-          <div data-mount="sign"></div>
-        </article>
-      </section>
+          <div data-mount="tipjar"></div>
+        </div>
 
-      <section class="view" id="view-support" role="tabpanel" aria-labelledby="tab-support" hidden>
-        <article class="card">
-          <h2>Support My Work</h2>
-
-          <div class="support-cols">
-            <div class="about">
-              <p class="saved" id="saved-all"></p>
-              <p>
-                SubSwap is free and it stays free. There's no paid tier, no ads and no tracking, and
-                nothing is held back until you pay — what you've got is all of it. It's open source
-                under the MIT license, so you don't have to take my word for any of that.
-              </p>
-              <p>
-                Tips are the whole business model. There's nothing here to buy and nothing to
-                upgrade to, so if these tools are worth something to you, this is the only way to
-                say so.
-              </p>
-              <a id="tip-link" class="linky" target="_blank" rel="noopener" hidden
-                >Or open the tip jar on my website</a
-              >
-              <p class="tip-missing" id="tip-missing" hidden></p>
-            </div>
-
-            <div data-mount="tipjar"></div>
-          </div>
-
-          <div data-mount="sign"></div>
-        </article>
-      </section>
+        <div data-mount="sign"></div>
+      </details>
 
       <!-- Mounted by manager.js into every [data-mount] slot, so the signature
            and the tip form each exist once here however many places they show

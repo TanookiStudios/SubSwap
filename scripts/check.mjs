@@ -146,33 +146,33 @@ for (const match of html.matchAll(/<template id="[^"]+">([\s\S]*?)<\/template>/g
   }
 }
 
-// Every tab and every in-page jump has to land on a view that exists.
-const viewIds = [...html.matchAll(/<section class="view" id="([^"]+)"/g)].map((m) => m[1]);
+// Every data-open has to name a <details> that's actually on the page. The run
+// finishing calls this by name too, which is how an ask nobody sees happens.
+const folds = [...html.matchAll(/<details[^>]*\sid="([^"]+)"/g)].map((m) => m[1]);
 
-for (const match of html.matchAll(/data-view="([^"]+)"/g)) {
-  if (!viewIds.includes(`view-${match[1]}`)) {
-    fail(`manager.html has data-view="${match[1]}" but no <section class="view" id="view-${match[1]}">`);
-  }
+for (const match of html.matchAll(/data-open="([^"]+)"/g)) {
+  if (!folds.includes(match[1])) fail(`manager.html has data-open="${match[1]}", which isn't a <details> on the page`);
 }
-for (const match of html.matchAll(/aria-controls="([^"]+)"/g)) {
-  if (!viewIds.includes(match[1])) fail(`manager.html: a tab points at aria-controls="${match[1]}", which isn't a view`);
+for (const match of managerJs.matchAll(/openFold\(\s*"([^"]+)"/g)) {
+  if (!folds.includes(match[1])) fail(`manager.js calls openFold("${match[1]}"), which isn't a <details> on the page`);
+}
+if (!folds.includes("fold-support")) {
+  fail("there's no #fold-support — finishing a run is supposed to open the tip jar, and it can't");
 }
 
-// A tab carries the same answer twice: aria-controls for assistive tech, and
-// data-view for the click handler, which is the one that actually does
-// anything. Shipped a nav once where only the first was there — it looked
-// perfect and no tab did a thing. Both, agreeing, or it isn't a tab.
-const nav = html.match(/<nav class="tabs"[\s\S]*?<\/nav>/);
-if (!nav) fail("manager.html has no <nav class=\"tabs\"> — the three views are unreachable");
-else {
-  for (const tab of nav[0].matchAll(/<button[^>]*>/g)) {
-    const view = tab[0].match(/data-view="([^"]+)"/);
-    const controls = tab[0].match(/aria-controls="([^"]+)"/);
-    if (!view) fail(`a tab has no data-view, so clicking it does nothing: ${tab[0].trim()}`);
-    else if (!controls) fail(`the "${view[1]}" tab has no aria-controls`);
-    else if (controls[1] !== `view-${view[1]}`) {
-      fail(`the "${view[1]}" tab says data-view="${view[1]}" but aria-controls="${controls[1]}" — they disagree`);
-    }
+// --- every el("id") the JS reaches for actually exists ---------------------
+//
+// el() is getElementById, so a stale id is `null`, and `null.prepend` throws
+// halfway through a render. Renaming a section and missing one reference is a
+// one-character mistake that only shows up in whichever UI state happens to
+// touch that branch — which is how a crash on the very first run, before
+// anything is saved, got all the way to a build.
+
+const markupIds = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
+
+for (const match of managerJs.matchAll(/\bel\("([^"]+)"\)/g)) {
+  if (!markupIds.has(match[1])) {
+    fail(`manager.js calls el("${match[1]}"), but nothing in manager.html has that id`);
   }
 }
 

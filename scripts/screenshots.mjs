@@ -145,8 +145,8 @@ const STATES = {
   running: { lists, run: runFor("running"), note: "mid-job" },
   break: { lists, run: runFor("break"), note: "mid-job, on a safety break" },
   done: { lists, run: runFor("done"), note: "finished" },
-  about: { lists, run: null, view: "about", note: "the About tab" },
-  support: { lists, run: null, view: "support", note: "the Support My Work tab" },
+  about: { lists, run: null, fold: "fold-about", note: "the About section, unfolded" },
+  support: { lists, run: null, fold: "fold-support", note: "the Support My Work section, unfolded" },
 };
 
 // --- the chrome.* stub -----------------------------------------------------
@@ -223,16 +223,14 @@ addEventListener("load", () => {
   const nag = document.getElementById("tip-missing");
   if (nag) nag.hidden = true;
 
-  // Press the real tab rather than toggling the views by hand, so the shot is
-  // of the same code path a person takes. Module scripts finish before the load
-  // event, so manager.js's handler is already listening by the time we get here.
-  const view = ${JSON.stringify(config.view || null)};
-  if (view) {
-    const tab = document.querySelector(\`#tabs [aria-controls="view-\${view}"]\`);
-    if (!tab) fail("no tab for view " + view);
+  // Unfold the section this shot is of, and say so loudly if it isn't there.
+  const fold = ${JSON.stringify(config.fold || null)};
+  if (fold) {
+    const section = document.getElementById(fold);
+    if (!section) fail("no section called " + fold);
     else {
-      tab.click();
-      if (document.getElementById("view-" + view).hidden) fail(view + " tab did not open");
+      section.open = true;
+      if (!section.open) fail(fold + " would not open");
     }
   }
 });`;

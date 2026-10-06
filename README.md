@@ -27,8 +27,9 @@ There's no build step. Clone it and load the folder:
 4. Click the SubSwap icon in the toolbar. That opens the manager tab, which is
    where everything happens.
 
-Three tabs: **Swap** is the app, **About** is Maddie's, and **Support My Work**
-is the tip jar.
+Below the two steps are three sections that fold open like Settings does:
+**Settings**, **About**, and **Support My Work** — the tip jar. They start shut
+and stay out of the way; finishing a run opens the tip jar on its own.
 
 ## Using it
 
@@ -92,9 +93,17 @@ and no relaxed policy. Nothing about the person using SubSwap goes with it; the
 amount is the entire payload, and the server decides what that amount means so
 it can't be edited by the person paying.
 
-The same form is mounted twice — in full on the tab, and cut down to the preset
-amounts inside a running job, where the column has to stay short enough to sit
-beside the log. `scripts/check.mjs` asserts it still posts where the money is.
+The same form is mounted twice — in full in the folded section, and cut down to
+the preset amounts inside a running job, where the column has to stay short
+enough to sit beside the log. `scripts/check.mjs` asserts it still posts where
+the money is.
+
+It gets unfolded automatically at the two points where the app has just done
+something for you: when a list finishes saving, and when a run finishes. Saving
+a list doesn't steal the scroll — step 2 is what you need next, so the section
+is simply open and waiting below. A finished practice run doesn't either, since
+nothing has actually happened yet. Nothing ever opens an external tab on its
+own; the only thing that leaves the extension is you pressing Chip In.
 
 ## Development
 
