@@ -156,8 +156,10 @@ Then certify:
   functionality — **true**
 - Not being used or transferred to determine creditworthiness or for lending — **true**
 
-**Privacy policy URL:** required. `store/privacy-policy.html` is written and
-ready to host — put it somewhere on `madilynthomas.com` and paste the URL in.
+**Privacy policy URL:** LIVE at `https://tanookistudios.com/apps/subswap/privacy`
+(unlinked from the site, kept out of the sitemap). The copy in
+`store/privacy-policy.html` is the standalone original; the hosted page is the
+one that counts.
 
 ---
 
@@ -165,8 +167,8 @@ ready to host — put it somewhere on `madilynthomas.com` and paste the URL in.
 
 - [ ] `npm run package` and upload `dist/subswap-1.0.0.zip`
 - [ ] Decide Auto vs Assist as the shipped default (top of this file)
-- [ ] Set `SUPPORT_URL` in `src/manager.js` if you want the tip button to appear
-- [ ] Host the privacy policy and paste in the URL
+- [x] `SUPPORT_URL` set to https://madilynthomas.com/tip
+- [x] Privacy policy hosted: https://tanookistudios.com/apps/subswap/privacy
 - [ ] Declare trader / non-trader status — **read this one carefully**, traders
       have to publish a contact address on the listing, and it's public
 - [ ] Verify `madilynthomas.com` in Search Console to become a verified publisher

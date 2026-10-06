@@ -14,7 +14,7 @@ const MAX_LOG = 500;
 
 // Where the tip button points. Leave it empty and the button doesn't render —
 // better no button than a dead link. Paste a Ko-fi / Polar / PayPal URL here.
-const SUPPORT_URL = "";
+const SUPPORT_URL = "https://madilynthomas.com/tip";
 
 // Doing one by hand is: search for the channel, wait for results, pick the right
 // one, load it, click Subscribe. Half a minute is a fair, unshowy estimate — it
