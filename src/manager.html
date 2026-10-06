@@ -142,6 +142,10 @@
         </div>
 
         <div class="row">
+          <button id="walk-again">Show the walkthrough again</button>
+        </div>
+
+        <div class="row">
           <button id="import-file">Load a file instead&hellip;</button>
           <input id="file-input" type="file" accept=".json,.csv,text/csv,application/json" hidden />
           <button id="log-copy">Copy the log</button>
@@ -203,6 +207,67 @@
 
         <div data-mount="sign"></div>
       </details>
+
+      <!-- First run only. A native <dialog> so Escape, the backdrop and keeping
+           focus inside are the browser's job rather than ours. -->
+      <dialog id="walk" class="walk">
+        <p class="walk-count" id="walk-count"></p>
+
+        <section class="walk-step" data-step="1">
+          <h2>Two accounts, one list</h2>
+          <p>
+            SubSwap saves the channels you follow on one YouTube account, then subscribes to them
+            again on another. You stay signed in the whole time — there's no password to give it
+            and no account to make.
+          </p>
+          <p>It's two steps, and they happen in two different sittings.</p>
+        </section>
+
+        <section class="walk-step" data-step="2" hidden>
+          <h2>Step 1 &mdash; the account you're leaving</h2>
+          <p>
+            Make sure this browser is signed into the <strong>old</strong> account, then press
+            <strong>Save my subscriptions</strong>.
+          </p>
+          <p>
+            A YouTube window opens and scrolls itself through your subscriptions. Leave it be for a
+            few seconds — it has to be on screen to read the list, and it closes itself when it's
+            done. Nothing on your account is changed.
+          </p>
+        </section>
+
+        <section class="walk-step" data-step="3" hidden>
+          <h2>Step 2 &mdash; the account you're moving to</h2>
+          <p>
+            Sign out of YouTube, sign into the <strong>new</strong> account, then come back to this
+            tab, pick your saved list and press go.
+          </p>
+          <p>
+            It works through them one at a time, with a gap between each and a longer break every
+            twenty, because rushing is what gets accounts limited. Anything you already follow is
+            skipped.
+          </p>
+        </section>
+
+        <section class="walk-step" data-step="4" hidden>
+          <h2>Do a practice run first</h2>
+          <p>
+            <strong>Practice run</strong> is ticked to start with. It walks the entire list and
+            tells you exactly what it would do without subscribing to anything — which is how you
+            find out the list is right before it touches your account.
+          </p>
+          <p>
+            Keep this tab open while it's working. If you close it, or the browser restarts,
+            nothing is lost — come back and press Resume.
+          </p>
+        </section>
+
+        <div class="walk-buttons">
+          <button type="button" class="linky" id="walk-skip">Skip</button>
+          <button type="button" id="walk-back">Back</button>
+          <button type="button" class="primary" id="walk-next" autofocus>Next</button>
+        </div>
+      </dialog>
 
       <!-- Mounted by manager.js into every [data-mount] slot, so the signature
            and the tip form each exist once here however many places they show

@@ -33,6 +33,8 @@ let workerTabId = null;
 let workerWindowId = null;
 let windowHidden = false;
 let loopToken = 0;
+let seenWalkthrough = false;
+let walkStep = 1;
 
 // ---------------------------------------------------------------- timers
 //
@@ -214,7 +216,7 @@ async function waitForSubscribed(tabId, ms) {
 // --------------------------------------------------------------- storage
 
 async function load() {
-  const data = await chrome.storage.local.get(["lists", "run", "log", "settings", "stats"]);
+  const data = await chrome.storage.local.get(["lists", "run", "log", "settings", "stats", "seenWalkthrough"]);
   lists = data.lists || [];
   run = data.run || null;
   logLines = data.log || [];
@@ -223,6 +225,7 @@ async function load() {
   if (run && run.status === "running") {
     run = Q.setStatus(run, "paused", "Interrupted — this tab was closed mid-run. Resume when ready.");
   }
+  seenWalkthrough = Boolean(data.seenWalkthrough);
   if (data.settings) applySettings(data.settings);
 }
 
@@ -892,6 +895,39 @@ function openFold(id, { scroll = false } = {}) {
   if (scroll) fold.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+// ------------------------------------------------------------ walkthrough
+//
+// Shown once, on the first open after install. Being told how something works
+// before you've touched it is only useful the first time; after that it's in
+// the way, so getting back to it is a button in Settings.
+
+const WALK_STEPS = document.querySelectorAll(".walk-step").length;
+
+function renderWalk() {
+  for (const step of document.querySelectorAll(".walk-step")) {
+    step.hidden = Number(step.dataset.step) !== walkStep;
+  }
+  el("walk-count").textContent = `${walkStep} of ${WALK_STEPS}`;
+  el("walk-back").disabled = walkStep === 1;
+  el("walk-next").textContent = walkStep === WALK_STEPS ? "Got it" : "Next";
+}
+
+function openWalk(step = 1) {
+  walkStep = step;
+  renderWalk();
+  el("walk").showModal();
+}
+
+// However it's dismissed — the button, Skip, Escape — it counts as seen. Being
+// shown it twice because you pressed the wrong thing would be worse than never
+// seeing it at all.
+async function closeWalk() {
+  el("walk").close();
+  if (seenWalkthrough) return;
+  seenWalkthrough = true;
+  await chrome.storage.local.set({ seenWalkthrough: true });
+}
+
 // ------------------------------------------------------------ file in/out
 
 function downloadList(list) {
@@ -1020,7 +1056,27 @@ document.addEventListener("click", (event) => {
   if (jump) openFold(jump.dataset.open, { scroll: true });
 });
 
+el("walk-next").addEventListener("click", () => {
+  if (walkStep >= WALK_STEPS) return closeWalk();
+  walkStep += 1;
+  renderWalk();
+});
+el("walk-back").addEventListener("click", () => {
+  if (walkStep <= 1) return;
+  walkStep -= 1;
+  renderWalk();
+});
+el("walk-skip").addEventListener("click", closeWalk);
+// Escape closes a <dialog> without going near our buttons.
+el("walk").addEventListener("close", closeWalk);
+el("walk-again").addEventListener("click", () => openWalk());
+
 connectTimer();
 await load();
 render();
 renderFeed();
+
+// First open after install, and only then. A run already under way means this
+// isn't a first open at all — the tab was reopened mid-job, and a walkthrough
+// over the top of that would be nonsense.
+if (!seenWalkthrough && !run) openWalk();

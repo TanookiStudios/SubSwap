@@ -760,3 +760,57 @@ button.primary {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
+
+/* ------------------------------------------------------------ walkthrough */
+
+.walk {
+  width: min(540px, calc(100vw - 32px));
+  padding: 24px 26px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+}
+
+.walk::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+
+.walk-count {
+  margin: 0 0 10px;
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.walk-step h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+.walk-step p {
+  margin: 0 0 10px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.walk-step p:last-child {
+  margin-bottom: 0;
+}
+
+.walk-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+/* Skip sits apart from the two that move you through it. */
+.walk-buttons .linky {
+  margin: 0 auto 0 0;
+}

@@ -145,6 +145,9 @@ const STATES = {
   running: { lists, run: runFor("running"), note: "mid-job" },
   break: { lists, run: runFor("break"), note: "mid-job, on a safety break" },
   done: { lists, run: runFor("done"), note: "finished" },
+  // Every other state has been through the walkthrough already — otherwise it
+  // would sit over the top of all of them.
+  walkthrough: { lists: [], run: null, firstRun: true, note: "the first-install walkthrough" },
   about: { lists, run: null, fold: "fold-about", note: "the About section, unfolded" },
   support: { lists, run: null, fold: "fold-support", note: "the Support My Work section, unfolded" },
 };
@@ -159,6 +162,7 @@ function stubSource(state) {
     log: config.run ? feedLines(state) : [],
     stats: { subscribed: state === "done" ? 184 : 126 },
     settings: { mode: "auto", scanFirst: true, dryRun: false, hideWindow: true },
+    seenWalkthrough: !config.firstRun,
   };
 
   // Enough of the extension APIs for the page to boot and render. Nothing here

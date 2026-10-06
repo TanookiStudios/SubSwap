@@ -31,6 +31,11 @@ Below the two steps are three sections that fold open like Settings does:
 **Settings**, **About**, and **Support My Work** — the tip jar. They start shut
 and stay out of the way; finishing a run opens the tip jar on its own.
 
+A four-card walkthrough opens the first time it runs, and only then; *Show the
+walkthrough again* in Settings brings it back. Uninstalling opens one page on
+the website with an anonymous "what went wrong" form —
+`chrome.runtime.setUninstallURL`, carrying the version number and nothing else.
+
 ## Using it
 
 **Export.** Sign into the old account, give the list a name, hit *Scan this

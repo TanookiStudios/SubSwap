@@ -57,6 +57,9 @@ HOW IT WORKS
 Already exported your data with Google Takeout? Load that CSV instead and skip
 step one entirely.
 
+A short walkthrough explains all of this the first time you open it, and lives
+in Settings afterwards if you want it again.
+
 TWO WAYS TO WORK
 
 Assist mode opens each channel and highlights the Subscribe button for you to
@@ -175,6 +178,14 @@ If a reviewer does query it, the honest answer is the three lines above. The
 fallback, if they insist, is to delete the form and leave the website link that
 sits next to it — one block of markup, no other change.
 
+**About the uninstall page.** `chrome.runtime.setUninstallURL` points at
+tanookistudios.com/apps/subswap/goodbye, so removing the extension opens one tab
+with an anonymous "what went wrong" form. Chrome does the opening, after the
+extension is gone. Only the version number is carried across; there is no email,
+name or identifier on the form or in the table behind it. It's described in the
+hosted privacy policy under "When You Uninstall It" — reviewers do look for that
+when an uninstall URL is set, and an undisclosed one is a rejection.
+
 **Privacy policy URL:** LIVE at `https://tanookistudios.com/apps/subswap/privacy`
 (unlinked from the site, kept out of the sitemap). The copy in
 `store/privacy-policy.html` is the standalone original; the hosted page is the
@@ -191,6 +202,8 @@ one that counts.
 - [ ] Declare trader / non-trader status — **read this one carefully**, traders
       have to publish a contact address on the listing, and it's public
 - [ ] Verify `madilynthomas.com` in Search Console to become a verified publisher
+- [ ] Screenshots: `walkthrough.png` shows the first-install explainer — probably
+      the best single image for the listing
 - [ ] Screenshots: `store/screenshots/` now has `about.png` and `support.png` too
       — decide whether the tip jar is one you want on the listing
 - [ ] Upload the icon (`src/icons/icon-128.png`) and the screenshots

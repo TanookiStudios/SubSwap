@@ -1,7 +1,9 @@
-// The service worker does two small jobs and nothing else:
+// The service worker does a few small jobs and nothing else:
 //
 //  1. Toolbar click -> open (or focus) the manager tab.
 //  2. Act as a timer service for the manager page.
+//  3. Open the manager once on install, and register where Chrome should send
+//     someone when they uninstall.
 //
 // (2) needs explaining. Chrome throttles setTimeout hard in tabs that are
 // hidden or occluded, and during a run the manager tab is usually behind the
@@ -11,6 +13,26 @@
 // into short hops so the messages themselves keep this worker alive.
 
 const MANAGER_URL = chrome.runtime.getURL("src/manager.html");
+
+// Chrome opens this by itself when the extension is removed — after it's gone,
+// so there is nothing left running to send anything. The version rides along
+// because "it broke in 1.0.4" is the only useful kind of answer; nothing else
+// does, and there is nothing else to send. The page says as much.
+const FAREWELL_URL = "https://tanookistudios.com/apps/subswap/goodbye";
+
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  chrome.runtime.setUninstallURL(`${FAREWELL_URL}?v=${chrome.runtime.getManifest().version}`);
+
+  // A freshly installed extension with no window is just an unexplained new
+  // icon. Opening the manager once is the only way the walkthrough gets seen.
+  // Updates don't, because interrupting someone to say "I updated" is rude.
+  if (reason === "install") chrome.tabs.create({ url: MANAGER_URL });
+});
+
+// onInstalled only fires on install and update, and the worker gets shut down
+// constantly — so the uninstall URL is set again whenever it starts up, or a
+// browser restart would quietly lose it.
+chrome.runtime.setUninstallURL(`${FAREWELL_URL}?v=${chrome.runtime.getManifest().version}`);
 
 chrome.action.onClicked.addListener(async () => {
   const existing = await chrome.tabs.query({ url: MANAGER_URL });

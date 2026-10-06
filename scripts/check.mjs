@@ -176,6 +176,33 @@ for (const match of managerJs.matchAll(/\bel\("([^"]+)"\)/g)) {
   }
 }
 
+// --- the walkthrough's steps are reachable ---------------------------------
+//
+// manager.js counts .walk-step elements and pages through them by data-step,
+// so a gap or a repeat leaves a step nobody can ever get to, and the counter
+// says "4" while only three exist.
+
+const steps = [...html.matchAll(/class="walk-step" data-step="(\d+)"/g)].map((m) => Number(m[1]));
+if (steps.length === 0) fail("manager.html has no .walk-step sections — the walkthrough is empty");
+const wanted = steps.map((_, i) => i + 1).join(",");
+if (steps.join(",") !== wanted) {
+  fail(`the walkthrough's data-step values are ${steps.join(",")}; they have to be ${wanted} or a step is unreachable`);
+}
+
+// --- the uninstall poll points somewhere real ------------------------------
+//
+// Chrome opens this after the extension is gone, so nothing is left running to
+// notice it 404ing. A typo here is silent for everyone forever.
+
+const background = readFileSync(join(root, "src/background.js"), "utf8");
+const FAREWELL = "https://tanookistudios.com/apps/subswap/goodbye";
+
+if (!background.includes("setUninstallURL")) {
+  fail("src/background.js doesn't call setUninstallURL — nobody is ever asked why they left");
+} else if (!background.includes(`"${FAREWELL}"`)) {
+  fail(`the uninstall URL has to be ${FAREWELL} — anything else is a 404 nobody will ever see`);
+}
+
 // --- the tip form still posts where the money is ---------------------------
 //
 // It's a plain form, which is the whole reason it can live in here at all — no
