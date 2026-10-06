@@ -10,7 +10,8 @@ Two steps:
    you already follow is skipped.
 
 Works in Chrome, Brave, Edge, Vivaldi, Opera — anything Chromium. No account, no
-server, no API key. Nothing leaves your browser.
+server, no API key. Nothing it reads about you leaves your browser — the one
+thing that goes anywhere is the tip jar, and only when someone presses it.
 
 **Open source, MIT licensed.** Every line of it is in this repository — including
 the part that reads your subscriptions — so you don't have to take my word for
@@ -25,6 +26,9 @@ There's no build step. Clone it and load the folder:
 3. **Load unpacked** → pick this folder.
 4. Click the SubSwap icon in the toolbar. That opens the manager tab, which is
    where everything happens.
+
+Three tabs: **Swap** is the app, **About** is Maddie's, and **Support My Work**
+is the tip jar.
 
 ## Using it
 
@@ -71,6 +75,26 @@ restarts, the queue is saved — reopen SubSwap and hit **Resume**.
 - **YouTube caps accounts at 2,000 subscriptions.**
 - If a channel has been deleted or renamed, it's marked failed with a reason
   rather than quietly counted as done. Failures get a *Retry* button.
+
+## The tip jar
+
+**Support My Work** carries a real donation form, not a link to one. It's the
+same plain HTML form that's on madilynthomas.com/tip, posting to the same
+endpoint (`tanookistudios.com/api/donate`), which answers 303 to a Stripe
+Checkout session.
+
+It's a form rather than anything cleverer for a specific reason: MV3 won't let
+an extension page load a remote script, so every hosted donation widget —
+Ko-fi, Stripe's own, PayPal's — is impossible here, and the tip page can't be
+put in an iframe either (it sends `X-Frame-Options: DENY`). A form submission,
+though, is a navigation rather than a fetch, so it needs no new host permission
+and no relaxed policy. Nothing about the person using SubSwap goes with it; the
+amount is the entire payload, and the server decides what that amount means so
+it can't be edited by the person paying.
+
+The same form is mounted twice — in full on the tab, and cut down to the preset
+amounts inside a running job, where the column has to stay short enough to sit
+beside the log. `scripts/check.mjs` asserts it still posts where the money is.
 
 ## Development
 

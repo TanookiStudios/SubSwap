@@ -123,6 +123,83 @@ if (/\.hidden\s*=/.test(managerJs)) {
   }
 }
 
+// --- tabs and cloned templates ---------------------------------------------
+//
+// The signature and the tip form each live once as a <template> and are cloned
+// into every [data-mount] slot. Both halves of that are silent when they break:
+// a slot naming a template that isn't there throws at boot and the page comes
+// up blank, and an id inside a template becomes a duplicate id the moment it is
+// mounted twice, at which point getElementById starts answering with whichever
+// copy happens to be first.
+
+const templateIds = [...html.matchAll(/<template id="([^"]+)"/g)].map((m) => m[1]);
+
+for (const match of html.matchAll(/data-mount="([^"]+)"/g)) {
+  if (!templateIds.includes(`tpl-${match[1]}`)) {
+    fail(`manager.html has data-mount="${match[1]}" but no <template id="tpl-${match[1]}"> to clone`);
+  }
+}
+
+for (const match of html.matchAll(/<template id="[^"]+">([\s\S]*?)<\/template>/g)) {
+  for (const dupe of match[1].matchAll(/\sid="([^"]+)"/g)) {
+    fail(`manager.html: a template carries id="${dupe[1]}" — cloned into two slots that becomes a duplicate id`);
+  }
+}
+
+// Every tab and every in-page jump has to land on a view that exists.
+const viewIds = [...html.matchAll(/<section class="view" id="([^"]+)"/g)].map((m) => m[1]);
+
+for (const match of html.matchAll(/data-view="([^"]+)"/g)) {
+  if (!viewIds.includes(`view-${match[1]}`)) {
+    fail(`manager.html has data-view="${match[1]}" but no <section class="view" id="view-${match[1]}">`);
+  }
+}
+for (const match of html.matchAll(/aria-controls="([^"]+)"/g)) {
+  if (!viewIds.includes(match[1])) fail(`manager.html: a tab points at aria-controls="${match[1]}", which isn't a view`);
+}
+
+// A tab carries the same answer twice: aria-controls for assistive tech, and
+// data-view for the click handler, which is the one that actually does
+// anything. Shipped a nav once where only the first was there — it looked
+// perfect and no tab did a thing. Both, agreeing, or it isn't a tab.
+const nav = html.match(/<nav class="tabs"[\s\S]*?<\/nav>/);
+if (!nav) fail("manager.html has no <nav class=\"tabs\"> — the three views are unreachable");
+else {
+  for (const tab of nav[0].matchAll(/<button[^>]*>/g)) {
+    const view = tab[0].match(/data-view="([^"]+)"/);
+    const controls = tab[0].match(/aria-controls="([^"]+)"/);
+    if (!view) fail(`a tab has no data-view, so clicking it does nothing: ${tab[0].trim()}`);
+    else if (!controls) fail(`the "${view[1]}" tab has no aria-controls`);
+    else if (controls[1] !== `view-${view[1]}`) {
+      fail(`the "${view[1]}" tab says data-view="${view[1]}" but aria-controls="${controls[1]}" — they disagree`);
+    }
+  }
+}
+
+// --- the tip form still posts where the money is ---------------------------
+//
+// It's a plain form, which is the whole reason it can live in here at all — no
+// remote script, no extra host permission. The flip side is that nothing fails
+// loudly if the endpoint is mistyped: the browser opens a new tab, gets a 404,
+// and the donation quietly doesn't happen.
+
+const DONATE_ENDPOINT = "https://tanookistudios.com/api/donate";
+
+const tipForm = html.match(/<form[\s\S]*?<\/form>/);
+if (!tipForm) {
+  fail("manager.html has no tip form — the Support My Work tab needs it");
+} else {
+  const form = tipForm[0];
+  if (!form.includes(`action="${DONATE_ENDPOINT}"`)) {
+    fail(`the tip form must post to ${DONATE_ENDPOINT} — anything else is a silent 404 in a new tab`);
+  }
+  if (!/method="post"/.test(form)) fail("the tip form must be method=post; the endpoint refuses anything else");
+  if (!/target="_blank"/.test(form)) fail("the tip form needs target=_blank, or checkout replaces the manager tab mid-run");
+  for (const field of ["site", "amount", "interval"]) {
+    if (!new RegExp(`name="${field}"`).test(form)) fail(`the tip form is missing its "${field}" field`);
+  }
+}
+
 // --- imports resolve -------------------------------------------------------
 
 for (const file of jsFiles) {

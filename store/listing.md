@@ -81,7 +81,8 @@ There is no account, no server and no analytics. Your list of channels is
 stored in your own browser and never sent anywhere. There's nothing to sign up
 for. Delete the extension and it's gone.
 
-Free, and always will be.
+Free, and always will be. There's a tip jar if you'd like to chip in, but
+nothing is locked behind it and nothing changes either way.
 ```
 
 ---
@@ -156,6 +157,22 @@ Then certify:
   functionality — **true**
 - Not being used or transferred to determine creditworthiness or for lending — **true**
 
+**About the tip jar.** The Support My Work tab has a donation form that posts to
+tanookistudios.com and hands off to Stripe Checkout in a new tab. It carries the
+amount and nothing else — no channels, no identifiers, nothing about the user —
+so it changes none of the answers above. Worth knowing when you fill the form in:
+
+- It is a *donation*, not a purchase, and nothing in the extension is locked
+  behind it. That's what keeps it clear of the Chrome Web Store payments policy,
+  which covers digital goods and services consumed inside an extension.
+- It loads no third-party script. The form is plain HTML in the extension and
+  the payment page is a normal tab on Stripe's own site.
+- The hosted privacy policy describes all of this under "The Tip Jar".
+
+If a reviewer does query it, the honest answer is the three lines above. The
+fallback, if they insist, is to delete the form and leave the website link that
+sits next to it — one block of markup, no other change.
+
 **Privacy policy URL:** LIVE at `https://tanookistudios.com/apps/subswap/privacy`
 (unlinked from the site, kept out of the sitemap). The copy in
 `store/privacy-policy.html` is the standalone original; the hosted page is the
@@ -172,6 +189,8 @@ one that counts.
 - [ ] Declare trader / non-trader status — **read this one carefully**, traders
       have to publish a contact address on the listing, and it's public
 - [ ] Verify `madilynthomas.com` in Search Console to become a verified publisher
+- [ ] Screenshots: `store/screenshots/` now has `about.png` and `support.png` too
+      — decide whether the tip jar is one you want on the listing
 - [ ] Upload the icon (`src/icons/icon-128.png`) and the screenshots
 - [ ] Consider publishing **Unlisted** first — still reviewed, but not listed in
       search or categories while you find out whether it passes

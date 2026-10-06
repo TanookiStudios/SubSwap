@@ -800,8 +800,8 @@ function renderSteps() {
     const controls = el("run-start").parentElement;
     if (brand.parentElement !== controls) controls.prepend(brand);
   } else {
-    const main = document.querySelector("main");
-    if (brand.parentElement !== main) main.prepend(brand);
+    const view = el("view-swap");
+    if (brand.parentElement !== view) view.prepend(brand);
   }
 
   el("step-1").classList.toggle("done", lists.length > 0);
@@ -838,9 +838,25 @@ function renderFeed() {
   }
 }
 
-// Shows up once there's a job on, which is when someone is sitting there with
-// nothing to do but watch a progress bar.
+// The Support tab is reachable at any point, so its half renders regardless of
+// whether a job is on. The column inside the job only shows up once there is
+// one — that's when someone is sitting there with nothing to do but watch a
+// progress bar.
 function renderSupport() {
+  const allTime = stats.subscribed * MANUAL_SECONDS_EACH;
+  el("saved-all").textContent =
+    allTime > 0 ? `SubSwap has saved you about ${humanDuration(allTime)} of clicking so far.` : "";
+
+  // The form posts to the endpoint whatever happens; this is the plain link out
+  // for anyone who'd rather give on the website than in here.
+  const tip = el("tip-link");
+  tip.hidden = !SUPPORT_URL;
+  if (SUPPORT_URL) tip.href = SUPPORT_URL;
+  el("tip-missing").hidden = Boolean(SUPPORT_URL);
+  el("tip-missing").textContent = SUPPORT_URL
+    ? ""
+    : "No tip link set yet — paste one into SUPPORT_URL in manager.js and the link appears.";
+
   const panel = el("support");
   if (!run) {
     panel.hidden = true;
@@ -849,7 +865,6 @@ function renderSupport() {
   panel.hidden = false;
 
   const thisRun = Q.progress(run).done * MANUAL_SECONDS_EACH;
-  const allTime = stats.subscribed * MANUAL_SECONDS_EACH;
   const verb = run.status === "finished" ? "just saved you" : "has saved you";
 
   let line = `Doing this lot by hand would have taken about ${humanDuration(thisRun)} — SubSwap ${verb} that.`;
@@ -857,14 +872,6 @@ function renderSupport() {
     line += ` Across everything you've done with it, that's about ${humanDuration(allTime)}.`;
   }
   el("saved-line").textContent = thisRun > 0 ? line : "";
-
-  const tip = el("tip-link");
-  tip.hidden = !SUPPORT_URL;
-  if (SUPPORT_URL) tip.href = SUPPORT_URL;
-  el("tip-missing").hidden = Boolean(SUPPORT_URL);
-  el("tip-missing").textContent = SUPPORT_URL
-    ? ""
-    : "No tip link set yet — paste one into SUPPORT_URL in manager.js and the button appears.";
 }
 
 // ------------------------------------------------------------ file in/out
@@ -974,6 +981,32 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   workerWindowId = null;
   windowHidden = false;
   if (run && run.status === "running") pauseRun("The YouTube tab was closed. Resume when you're ready.");
+});
+
+// ------------------------------------------------------------------ tabs
+//
+// The signature and the tip form each appear in more than one place. Rather
+// than keeping two copies of either in the markup — where editing one and
+// forgetting the other is a matter of time — each exists once as a <template>
+// and gets cloned into every slot that asks for it by name.
+for (const slot of document.querySelectorAll("[data-mount]")) {
+  slot.appendChild(el(`tpl-${slot.dataset.mount}`).content.cloneNode(true));
+}
+
+function showView(name) {
+  for (const tab of document.querySelectorAll("#tabs button")) {
+    tab.setAttribute("aria-selected", String(tab.getAttribute("aria-controls") === `view-${name}`));
+  }
+  for (const view of document.querySelectorAll(".view")) {
+    view.hidden = view.id !== `view-${name}`;
+  }
+}
+
+// Delegated, so the tabs themselves and the "more about why I make these" link
+// inside the job column go through the same path.
+document.addEventListener("click", (event) => {
+  const jump = event.target.closest("[data-view]");
+  if (jump) showView(jump.dataset.view);
 });
 
 connectTimer();

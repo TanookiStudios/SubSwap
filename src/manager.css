@@ -374,6 +374,11 @@ button.primary {
   gap: 28px;
   align-items: stretch;
   margin-top: 14px;
+  /* #feed takes its height from this row, and the row takes its height from
+     whichever column is taller. Now that the story has moved to the About tab
+     the right-hand column is shorter, so the row needs a floor of its own or
+     the log collapses to a few lines. */
+  min-height: 340px;
 }
 
 @media (max-width: 940px) {
@@ -458,18 +463,18 @@ button.primary {
 }
 
 .about-rules {
-  margin: 0 0 9px;
+  margin: 0 0 11px;
   padding-left: 20px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--muted);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink);
 }
 
 .about-rules li {
   margin: 4px 0;
 }
 
-.support .saved {
+.saved {
   margin: 0 0 12px;
   font-size: 15.5px;
   font-weight: 620;
@@ -477,32 +482,44 @@ button.primary {
   color: var(--accent-text);
 }
 
-.support .saved:empty {
+.saved:empty {
   display: none;
 }
 
-.support .about p {
-  margin: 0 0 9px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--muted);
+.about {
+  /* Prose wants a measure. The card runs to 1060px and lines that long are
+     genuinely harder to read. */
+  max-width: 68ch;
 }
 
-.support .about p:last-child {
+.about p {
+  margin: 0 0 11px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.about p:last-child {
   margin-bottom: 0;
 }
 
-a.tip {
+/* Both the submit button on the tip form and the link out to the website wear
+   this, so it has to reset what a <button> brings with it. */
+.tip {
   display: block;
+  width: 100%;
   text-align: center;
   margin-top: 16px;
   padding: 10px 16px;
+  border: 0;
   border-radius: 9px;
   background: var(--accent);
   color: var(--accent-ink);
+  font: inherit;
   font-weight: 650;
   font-size: 14px;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .tip-missing {
@@ -596,4 +613,173 @@ a.tip {
 
 .linky:hover {
   color: var(--ink);
+}
+
+/* ------------------------------------------------------------------- tabs */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 2px;
+}
+
+.tabs button {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  padding: 7px 14px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tabs button:hover {
+  color: var(--ink);
+}
+
+.tabs button[aria-selected="true"] {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-ink);
+}
+
+/* main holds the tab bar and the three views; each view lays its own cards out
+   the way main used to. */
+.view {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+/* A mount slot must not become a box of its own — the signature pins itself to
+   the bottom of the tip column with `margin-top: auto`, which only works if it
+   is a direct child of that flex column. */
+[data-mount] {
+  display: contents;
+}
+
+/* --------------------------------------------------------------- tip jar */
+
+/* Copy on the left, the form on the right, until there isn't room for both. */
+.support-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .support-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.tipjar {
+  margin: 0;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.tipjar .ask {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.tipjar fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 12px;
+}
+
+.tipjar legend {
+  padding: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tipjar .amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tipjar .amounts label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.tipjar .amounts label:has(:checked) {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.tipjar .custom {
+  display: block;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tipjar .custom input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.tipjar .note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* Sits under the form in the job column, where there's no room for the story
+   itself. */
+.about-jump {
+  margin: 14px 0 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The tip jar appears twice: in full on the Support My Work tab, and cut down to
+   the presets inside a running job, where it has to stay short enough to sit
+   beside the log without pushing the rest of the page off the bottom. */
+.support .tipjar {
+  padding: 14px 15px 15px;
+}
+
+.support .tipjar .extra {
+  display: none;
+}
+
+.support .tipjar .ask {
+  font-size: 13.5px;
 }

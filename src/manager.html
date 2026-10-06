@@ -7,189 +7,317 @@
   </head>
   <body>
     <main>
-      <!-- Step 1 ------------------------------------------------------- -->
-      <section class="card step" id="step-1">
-        <div class="step-no">1</div>
-        <div class="step-body">
-          <h2>Save the subscriptions from your old account</h2>
-          <p class="help">
-            Sign into the <strong>old</strong> account in this browser, then press the button.
-            Nothing is changed — it only reads.
-          </p>
-          <button id="export-run" class="big primary">Save my subscriptions</button>
-          <p class="status" id="export-status"></p>
-        </div>
-      </section>
+      <!-- Three views, one page. The swap is the app; About and Support My Work
+           are Maddie's, and they're reachable at any point rather than only
+           while a job happens to be running. -->
+      <nav class="tabs" id="tabs" role="tablist">
+        <button type="button" role="tab" id="tab-swap" data-view="swap" aria-controls="view-swap" aria-selected="true">
+          Swap
+        </button>
+        <button type="button" role="tab" id="tab-about" data-view="about" aria-controls="view-about" aria-selected="false">
+          About
+        </button>
+        <button type="button" role="tab" id="tab-support" data-view="support" aria-controls="view-support" aria-selected="false">
+          Support My Work
+        </button>
+      </nav>
 
-      <!-- Step 2 ------------------------------------------------------- -->
-      <section class="card step" id="step-2">
-        <div class="step-no">2</div>
-        <div class="step-body">
-          <h2>Subscribe on your new account</h2>
-          <p class="help">
-            Sign out, sign into the <strong>new</strong> account, then pick a list and press go.
-            Anything you already follow is skipped.
-          </p>
+      <section class="view" id="view-swap" role="tabpanel" aria-labelledby="tab-swap">
+        <!-- Step 1 ------------------------------------------------------- -->
+        <section class="card step" id="step-1">
+          <div class="step-no">1</div>
+          <div class="step-body">
+            <h2>Save the subscriptions from your old account</h2>
+            <p class="help">
+              Sign into the <strong>old</strong> account in this browser, then press the button.
+              Nothing is changed — it only reads.
+            </p>
+            <button id="export-run" class="big primary">Save my subscriptions</button>
+            <p class="status" id="export-status"></p>
+          </div>
+        </section>
 
-          <div id="lists" class="lists"></div>
-          <button id="show-step-1" class="linky" type="button" hidden>
-            Save another account's subscriptions
-          </button>
+        <!-- Step 2 ------------------------------------------------------- -->
+        <section class="card step" id="step-2">
+          <div class="step-no">2</div>
+          <div class="step-body">
+            <h2>Subscribe on your new account</h2>
+            <p class="help">
+              Sign out, sign into the <strong>new</strong> account, then pick a list and press go.
+              Anything you already follow is skipped.
+            </p>
 
-          <div class="controls">
-            <!-- The brand rides in this row while step 1 is folded away, so the
-                 title and the buttons share one line instead of costing two
-                 blocks. renderSteps moves it up to step 1 when that's on show. -->
-            <div class="brand" id="brand">
-              <h1>SubSwap</h1>
-              <p>Move your subscriptions to a new YouTube account.</p>
+            <div id="lists" class="lists"></div>
+            <button id="show-step-1" class="linky" type="button" hidden>
+              Save another account's subscriptions
+            </button>
+
+            <div class="controls">
+              <!-- The brand rides in this row while step 1 is folded away, so the
+                   title and the buttons share one line instead of costing two
+                   blocks. renderSteps moves it up to step 1 when that's on show. -->
+              <div class="brand" id="brand">
+                <h1>SubSwap</h1>
+                <p>Move your subscriptions to a new YouTube account.</p>
+              </div>
+              <button id="run-start" class="big primary">Subscribe to them all</button>
+              <button id="run-pause" disabled>Pause</button>
+              <button id="run-stop" disabled>Stop</button>
+              <button id="run-retry" hidden>Try the failed ones again</button>
+              <button id="run-reset" hidden>That looked right — do it for real</button>
             </div>
-            <button id="run-start" class="big primary">Subscribe to them all</button>
-            <button id="run-pause" disabled>Pause</button>
-            <button id="run-stop" disabled>Stop</button>
-            <button id="run-retry" hidden>Try the failed ones again</button>
-            <button id="run-reset" hidden>That looked right — do it for real</button>
+
+            <label class="practice" id="practice-row"
+              ><input type="checkbox" id="dry-run" checked /> Practice run first — go through the whole
+              list without actually subscribing, so you can see it's right</label
+            >
+
+            <!-- The job lives inside step 2 rather than in a card of its own —
+                 it's the same job, and a second card wasted a screenful. -->
+            <div class="job" id="job" hidden>
+              <div class="job-head">
+                <h3 id="job-title">Working…</h3>
+                <span class="job-counts" id="progress-counts"></span>
+              </div>
+              <div class="bar"><div class="fill" id="progress-fill"></div></div>
+              <p class="now" id="now-line"></p>
+              <p class="warn" id="run-warning" hidden></p>
+
+              <div class="job-cols">
+                <ol id="feed"></ol>
+
+                <aside class="support" id="support">
+                  <p class="saved" id="saved-line"></p>
+
+                  <!-- The ask sits here because this column is on screen precisely
+                       when there's nothing to do but watch the log, and the line
+                       above it has just said what the run saved you. The story
+                       behind it lives on the About tab. -->
+                  <div data-mount="tipjar"></div>
+
+                  <button type="button" class="linky about-jump" data-view="about">
+                    More about why I make these
+                  </button>
+
+                  <div data-mount="sign"></div>
+                </aside>
+              </div>
+
+              <p class="help keepopen">
+                Leave this tab open while it's working. If you close it, nothing is lost — come back
+                and press Resume.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Settings ----------------------------------------------------- -->
+        <details class="card">
+          <summary>Settings <span class="muted">(you shouldn't need these)</span></summary>
+
+          <div class="row">
+            <label>Who clicks Subscribe</label>
+            <div class="segmented" id="mode">
+              <button data-mode="auto" class="selected">SubSwap does</button>
+              <button data-mode="assist">I will</button>
+            </div>
           </div>
 
-          <label class="practice" id="practice-row"
-            ><input type="checkbox" id="dry-run" checked /> Practice run first — go through the whole
-            list without actually subscribing, so you can see it's right</label
-          >
+          <div class="row checks">
+            <label
+              ><input type="checkbox" id="scan-first" checked /> Check the new account first so nothing
+              gets done twice</label
+            >
+          </div>
 
-          <!-- The job lives inside step 2 rather than in a card of its own —
-               it's the same job, and a second card wasted a screenful. -->
-          <div class="job" id="job" hidden>
-            <div class="job-head">
-              <h3 id="job-title">Working…</h3>
-              <span class="job-counts" id="progress-counts"></span>
-            </div>
-            <div class="bar"><div class="fill" id="progress-fill"></div></div>
-            <p class="now" id="now-line"></p>
-            <p class="warn" id="run-warning" hidden></p>
+          <div class="row checks">
+            <label
+              ><input type="checkbox" id="hide-window" checked /> Keep the YouTube window out of the
+              way while it subscribes (it still has to be on screen for the few seconds it spends
+              reading your list)</label
+            >
+          </div>
 
-            <div class="job-cols">
-              <ol id="feed"></ol>
+          <div class="row pacing">
+            <label>Wait between each one</label>
+            <input id="min-delay" type="number" min="0" step="1" value="5" /> to
+            <input id="max-delay" type="number" min="0" step="1" value="10" /> seconds, then a
+            <input id="batch-pause" type="number" min="0" step="5" value="60" /> second break every
+            <input id="batch-size" type="number" min="0" step="1" value="20" />
+          </div>
 
-              <aside class="support" id="support">
-                <p class="saved" id="saved-line"></p>
+          <div class="row">
+            <label for="export-label">Name for the next saved list</label>
+            <input id="export-label" type="text" placeholder="My subscriptions" />
+          </div>
 
-                <div class="about">
-                  <p>
-                    I built this because I was moving to a new YouTube account and realized the
-                    alternative was clicking Subscribe about five hundred times. I got roughly forty
-                    in before deciding there's gotta be a better way. I present to you, my better
-                    way.
-                  </p>
-                  <p>
-                    I'm Maddie, I'm autistic, and I often make small tools that fix one specific
-                    irritation properly — the sort of thing that's too small for a company to bother
-                    with and too annoying to keep putting up with.
-                  </p>
-                  <p>I also develop apps for PC, Mac, mobiles, and tablets. I generally develop apps that:</p>
-                  <ol class="about-rules">
-                    <li>Help me with a problem that I have.</li>
-                    <li>Will help others.</li>
-                    <li>Bring a little bit of good to the world.</li>
-                  </ol>
-                  <p>
-                    This is also my income. Due to my autism, I don't do well with most typical
-                    office jobs. In fact, I tend to really struggle. So with the support of my wife,
-                    I decided to invest in myself, and create my own apps full-time.
-                  </p>
-                  <p>
-                    So if you believe in the vision, or my app saved you a bunch of time, consider
-                    contributing a few bucks. Everything helps!
-                  </p>
-                </div>
+          <div class="row">
+            <button id="import-file">Load a file instead&hellip;</button>
+            <input id="file-input" type="file" accept=".json,.csv,text/csv,application/json" hidden />
+            <button id="log-copy">Copy the log</button>
+          </div>
+        </details>
+      </section>
 
-                <a id="tip-link" class="tip" target="_blank" rel="noopener" hidden>Buy me a coffee</a>
-                <p class="tip-missing" id="tip-missing" hidden></p>
+      <section class="view" id="view-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+        <article class="card">
+          <h2>About</h2>
 
-                <div class="sign">
-                  <!-- Inlined rather than an <img> so currentColor follows the theme. -->
-                  <svg
-                    viewBox="0 0 330 116"
-                    width="170"
-                    height="54"
-                    role="img"
-                    aria-label="Signed, Maddie"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.7"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <title>Maddie</title>
-                    <g transform="rotate(-4 160 66) skewX(-8)">
-                      <path d="M2 72 C 12 69 22 69 32 68" opacity="0.85"></path>
-                      <path
-                        d="M50 92 C 46 66 48 34 56 30 C 62 27 62 46 63 62 C 64 74 63 84 68 90 C 74 64 84 40 92 46 C 97 58 95 80 102 90 C 106 94 114 92 118 84 C 122 72 108 68 106 80 C 105 90 118 94 121 84 C 122 76 122 82 126 90 C 130 94 138 92 141 84 C 144 72 130 68 128 80 C 127 90 140 94 143 84 C 145 60 149 26 152 27 C 154 26 153 42 152 54 C 151 68 149 82 155 90 C 159 94 167 92 170 84 C 173 72 159 68 157 80 C 156 90 169 94 172 84 C 174 60 178 26 181 27 C 183 26 182 42 181 54 C 180 68 178 82 184 90 C 188 94 193 82 194 74 C 195 80 194 88 199 90 C 205 86 214 82 216 74 C 218 66 205 64 202 72 C 199 82 210 90 222 84 C 242 96 278 96 306 74 C 316 67 320 62 323 63"
-                      ></path>
-                      <circle cx="196" cy="48" r="2.4" fill="currentColor" stroke="none"></circle>
-                    </g>
-                  </svg>
-                  <div>
-                    <p class="sign-name">Maddie</p>
-                    <p class="sign-role">maker of SubSwap</p>
-                  </div>
-                </div>
-              </aside>
-            </div>
-
-            <p class="help keepopen">
-              Leave this tab open while it's working. If you close it, nothing is lost — come back
-              and press Resume.
+          <div class="about">
+            <p>
+              I built this because I was moving to a new YouTube account and realized the
+              alternative was clicking Subscribe about five hundred times. I got roughly forty in
+              before deciding there's gotta be a better way. I present to you, my better way.
+            </p>
+            <p>
+              I'm Maddie, I'm autistic, and I often make small tools that fix one specific
+              irritation properly — the sort of thing that's too small for a company to bother with
+              and too annoying to keep putting up with.
+            </p>
+            <p>I also develop apps for PC, Mac, mobiles, and tablets. I generally develop apps that:</p>
+            <ol class="about-rules">
+              <li>Help me with a problem that I have.</li>
+              <li>Will help others.</li>
+              <li>Bring a little bit of good to the world.</li>
+            </ol>
+            <p>
+              This is also my income. Due to my autism, I don't do well with most typical office
+              jobs. In fact, I tend to really struggle. So with the support of my wife, I decided to
+              invest in myself, and create my own apps full-time.
             </p>
           </div>
-        </div>
+
+          <div data-mount="sign"></div>
+        </article>
       </section>
 
-      <!-- Settings ----------------------------------------------------- -->
-      <details class="card">
-        <summary>Settings <span class="muted">(you shouldn't need these)</span></summary>
+      <section class="view" id="view-support" role="tabpanel" aria-labelledby="tab-support" hidden>
+        <article class="card">
+          <h2>Support My Work</h2>
 
-        <div class="row">
-          <label>Who clicks Subscribe</label>
-          <div class="segmented" id="mode">
-            <button data-mode="auto" class="selected">SubSwap does</button>
-            <button data-mode="assist">I will</button>
+          <div class="support-cols">
+            <div class="about">
+              <p class="saved" id="saved-all"></p>
+              <p>
+                SubSwap is free and it stays free. There's no paid tier, no ads and no tracking, and
+                nothing is held back until you pay — what you've got is all of it. It's open source
+                under the MIT license, so you don't have to take my word for any of that.
+              </p>
+              <p>
+                Tips are the whole business model. There's nothing here to buy and nothing to
+                upgrade to, so if these tools are worth something to you, this is the only way to
+                say so.
+              </p>
+              <a id="tip-link" class="linky" target="_blank" rel="noopener" hidden
+                >Or open the tip jar on my website</a
+              >
+              <p class="tip-missing" id="tip-missing" hidden></p>
+            </div>
+
+            <div data-mount="tipjar"></div>
+          </div>
+
+          <div data-mount="sign"></div>
+        </article>
+      </section>
+
+      <!-- Mounted by manager.js into every [data-mount] slot, so the signature
+           and the tip form each exist once here however many places they show
+           up on screen. Nothing in either carries an id, which is what makes
+           them safe to clone. -->
+      <template id="tpl-sign">
+        <div class="sign">
+          <!-- Inlined rather than an <img> so currentColor follows the theme. -->
+          <svg
+            viewBox="0 0 330 116"
+            width="170"
+            height="54"
+            role="img"
+            aria-label="Signed, Maddie"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <title>Maddie</title>
+            <g transform="rotate(-4 160 66) skewX(-8)">
+              <path d="M2 72 C 12 69 22 69 32 68" opacity="0.85"></path>
+              <path
+                d="M50 92 C 46 66 48 34 56 30 C 62 27 62 46 63 62 C 64 74 63 84 68 90 C 74 64 84 40 92 46 C 97 58 95 80 102 90 C 106 94 114 92 118 84 C 122 72 108 68 106 80 C 105 90 118 94 121 84 C 122 76 122 82 126 90 C 130 94 138 92 141 84 C 144 72 130 68 128 80 C 127 90 140 94 143 84 C 145 60 149 26 152 27 C 154 26 153 42 152 54 C 151 68 149 82 155 90 C 159 94 167 92 170 84 C 173 72 159 68 157 80 C 156 90 169 94 172 84 C 174 60 178 26 181 27 C 183 26 182 42 181 54 C 180 68 178 82 184 90 C 188 94 193 82 194 74 C 195 80 194 88 199 90 C 205 86 214 82 216 74 C 218 66 205 64 202 72 C 199 82 210 90 222 84 C 242 96 278 96 306 74 C 316 67 320 62 323 63"
+              ></path>
+              <circle cx="196" cy="48" r="2.4" fill="currentColor" stroke="none"></circle>
+            </g>
+          </svg>
+          <div>
+            <p class="sign-name">Maddie</p>
+            <p class="sign-role">maker of SubSwap</p>
           </div>
         </div>
+      </template>
 
-        <div class="row checks">
-          <label
-            ><input type="checkbox" id="scan-first" checked /> Check the new account first so nothing
-            gets done twice</label
-          >
-        </div>
+      <template id="tpl-tipjar">
+        <!-- The real tip jar, not a link to one. It's the same plain form that's
+             on madilynthomas.com/tip, posting to the same endpoint, which answers
+             303 to Stripe Checkout in the new tab. No remote script and no new
+             host permission: a form submission is a navigation, so it needs
+             neither — which is why this could be done properly rather than as a
+             link out. The amount is resolved server-side so it can't be edited
+             by the person paying. -->
+        <form
+          class="tipjar"
+          method="post"
+          action="https://tanookistudios.com/api/donate"
+          target="_blank"
+          rel="noopener"
+        >
+          <!-- The four parts marked "extra" are dropped by the CSS when this form
+               is mounted inside a running job, where the column has to stay short
+               enough to sit beside the log. Hiding them is safe: the preset
+               amounts and the already-checked "once" still submit, and "custom"
+               is only ever read when "other" is the chosen amount. -->
+          <p class="ask">
+            So if you believe in the vision, or my app saved you a bunch of time, consider
+            contributing a few bucks. Everything helps!
+          </p>
 
-        <div class="row checks">
-          <label
-            ><input type="checkbox" id="hide-window" checked /> Keep the YouTube window out of the
-            way while it subscribes (it still has to be on screen for the few seconds it spends
-            reading your list)</label
-          >
-        </div>
+          <input type="hidden" name="site" value="maddie" />
 
-        <div class="row pacing">
-          <label>Wait between each one</label>
-          <input id="min-delay" type="number" min="0" step="1" value="5" /> to
-          <input id="max-delay" type="number" min="0" step="1" value="10" /> seconds, then a
-          <input id="batch-pause" type="number" min="0" step="5" value="60" /> second break every
-          <input id="batch-size" type="number" min="0" step="1" value="20" />
-        </div>
+          <fieldset>
+            <legend>How much</legend>
+            <div class="amounts">
+              <label><input type="radio" name="amount" value="300" /> $3</label>
+              <label><input type="radio" name="amount" value="500" /> $5</label>
+              <label><input type="radio" name="amount" value="1000" checked /> $10</label>
+              <label><input type="radio" name="amount" value="2500" /> $25</label>
+              <label class="extra"><input type="radio" name="amount" value="other" /> Other</label>
+            </div>
+          </fieldset>
 
-        <div class="row">
-          <label for="export-label">Name for the next saved list</label>
-          <input id="export-label" type="text" placeholder="My subscriptions" />
-        </div>
+          <label class="custom extra"
+            >If other, how much (dollars)
+            <input name="custom" type="number" min="1" max="10000" step="1" inputmode="numeric" />
+          </label>
 
-        <div class="row">
-          <button id="import-file">Load a file instead&hellip;</button>
-          <input id="file-input" type="file" accept=".json,.csv,text/csv,application/json" hidden />
-          <button id="log-copy">Copy the log</button>
-        </div>
-      </details>
+          <fieldset class="extra">
+            <legend>How often</legend>
+            <div class="amounts">
+              <label><input type="radio" name="interval" value="once" checked /> Once</label>
+              <label><input type="radio" name="interval" value="month" /> Monthly</label>
+            </div>
+          </fieldset>
+
+          <button type="submit" class="tip">Chip In</button>
+
+          <p class="note">
+            Opens Stripe in a new tab. I never see your card.
+            <span class="extra"
+              >Nothing about you is stored, nothing is unlocked and nothing changes for you either
+              way — it's a thank-you, not a purchase.</span
+            >
+          </p>
+        </form>
+      </template>
     </main>
 
     <script type="module" src="manager.js"></script>

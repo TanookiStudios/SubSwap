@@ -145,6 +145,8 @@ const STATES = {
   running: { lists, run: runFor("running"), note: "mid-job" },
   break: { lists, run: runFor("break"), note: "mid-job, on a safety break" },
   done: { lists, run: runFor("done"), note: "finished" },
+  about: { lists, run: null, view: "about", note: "the About tab" },
+  support: { lists, run: null, view: "support", note: "the Support My Work tab" },
 };
 
 // --- the chrome.* stub -----------------------------------------------------
@@ -184,6 +186,18 @@ function stubSource(state) {
   windows: { create: async () => ({ id: 1, tabs: [{ id: 1 }] }), update: async () => {}, remove: async () => {} },
   scripting: { executeScript: async () => [{ result: null }] },
 };
+// Chrome writes the PNG whatever happens on the page, so throwing in here would
+// be invisible — the shot would just quietly be of the wrong thing. Paint the
+// failure across the page instead, where it can't be mistaken for a good one.
+function fail(why) {
+  const bar = document.createElement("p");
+  bar.textContent = "HARNESS FAILED: " + why;
+  bar.style.cssText =
+    "position:fixed;inset:0;z-index:99999;margin:0;display:flex;align-items:center;" +
+    "justify-content:center;background:#b32020;color:#fff;font:700 28px system-ui";
+  document.body.appendChild(bar);
+}
+
 addEventListener("load", () => {
   // The "now" line is written by the run loop, which isn't running here.
   const now = document.getElementById("now-line");
@@ -207,6 +221,19 @@ addEventListener("load", () => {
   // Developer nag about an unset SUPPORT_URL — not product, never in a shot.
   const nag = document.getElementById("tip-missing");
   if (nag) nag.hidden = true;
+
+  // Press the real tab rather than toggling the views by hand, so the shot is
+  // of the same code path a person takes. Module scripts finish before the load
+  // event, so manager.js's handler is already listening by the time we get here.
+  const view = ${JSON.stringify(config.view || null)};
+  if (view) {
+    const tab = document.querySelector(\`#tabs [aria-controls="view-\${view}"]\`);
+    if (!tab) fail("no tab for view " + view);
+    else {
+      tab.click();
+      if (document.getElementById("view-" + view).hidden) fail(view + " tab did not open");
+    }
+  }
 });`;
 }
 
