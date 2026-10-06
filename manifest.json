@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SubSwap",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Export your YouTube subscriptions from one account and re-subscribe on another.",
   "minimum_chrome_version": "116",
   "permissions": ["storage", "scripting", "tabs"],

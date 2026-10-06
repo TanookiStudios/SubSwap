@@ -20,6 +20,10 @@
         <button type="button" role="tab" id="tab-support" data-view="support" aria-controls="view-support" aria-selected="false">
           Support My Work
         </button>
+        <!-- Two copies of an unpacked extension look identical in the toolbar,
+             and clicking the stale one looks exactly like a build that didn't
+             work. Printing the version is the cheapest way to tell them apart. -->
+        <span class="version" id="version"></span>
       </nav>
 
       <section class="view" id="view-swap" role="tabpanel" aria-labelledby="tab-swap">

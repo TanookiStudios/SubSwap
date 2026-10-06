@@ -1,6 +1,6 @@
 {
   "name": "subswap",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "type": "module",
   "description": "Chrome/Brave extension: export YouTube subscriptions from one account, re-subscribe on another.",

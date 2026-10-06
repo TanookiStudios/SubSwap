@@ -993,6 +993,9 @@ for (const slot of document.querySelectorAll("[data-mount]")) {
   slot.appendChild(el(`tpl-${slot.dataset.mount}`).content.cloneNode(true));
 }
 
+// getManifest isn't there under the screenshot harness's stub, hence the guard.
+el("version").textContent = `v${chrome.runtime.getManifest?.().version ?? "?"}`;
+
 function showView(name) {
   for (const tab of document.querySelectorAll("#tabs button")) {
     tab.setAttribute("aria-selected", String(tab.getAttribute("aria-controls") === `view-${name}`));

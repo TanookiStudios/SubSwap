@@ -176,6 +176,7 @@ function stubSource(state) {
       onDisconnect: { addListener: () => {} },
     }),
     getURL: (path) => path,
+    getManifest: () => ({ version: ${JSON.stringify(JSON.parse(readFileSync(join(root, "manifest.json"), "utf8")).version)} }),
   },
   tabs: {
     get: async () => ({}), update: async () => ({}), reload: async () => {},
