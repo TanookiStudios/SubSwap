@@ -1,0 +1,9 @@
+[
+  { "version": "1.0.6", "date": "2026-10-06", "notes": ["The Support My Work section is tidier - it ends with the tip jar now, without a second signature underneath."] },
+  { "version": "1.0.5", "date": "2026-10-06", "notes": ["A short four-card walkthrough the first time you open SubSwap. Settings has a button to see it again.", "Removing the extension opens one page with an optional, anonymous \"what went wrong\" box. Close it and nothing is sent."] },
+  { "version": "1.0.4", "date": "2026-10-06", "notes": ["About and Support My Work fold open and shut like Settings, so the main screen is just the two steps.", "Finishing a run opens the tip jar on its own - once, at the end, never in the middle."] },
+  { "version": "1.0.3", "date": "2026-10-06", "notes": ["The version number shows next to the title, so you can tell which one you have at a glance."] },
+  { "version": "1.0.2", "date": "2026-10-06", "notes": ["New About and Support My Work sections, with a real tip jar instead of a link out.", "SubSwap is open source under the MIT license.", "Privacy policy published."] },
+  { "version": "1.0.1", "date": "2026-08-07", "notes": ["Fixed channel pictures sometimes not being saved with your list."] },
+  { "version": "1.0.0", "date": "2026-08-02", "notes": ["First release: save the subscriptions from one YouTube account and subscribe to them on another, with a practice run, breaks to keep your account safe, and resume after closing the tab."] }
+]
