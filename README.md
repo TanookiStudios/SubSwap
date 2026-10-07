@@ -3,6 +3,8 @@
 Take your YouTube subscriptions from one account to another without hunting down
 every channel by hand.
 
+Website: **[subswap.tanookistudios.com](https://subswap.tanookistudios.com)** — screenshots, install steps and every version.
+
 Two steps:
 
 1. **Export** — signed into the old account, scan and save the list.
